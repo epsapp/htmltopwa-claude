@@ -132,6 +132,11 @@
   .qr-wrap{background:#fff;border-radius:8px;padding:12px;display:inline-block;margin-bottom:10px;}
   .qr-size-note{font-size:.7rem;color:var(--muted);margin-top:6px;}
   .scanner-url{font-family:'DM Mono',monospace;font-size:.65rem;color:var(--muted);word-break:break-all;margin-top:8px;padding:6px;background:var(--bg);border-radius:4px;}
+  /* QR status indicators */
+  .qr-status{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:20px;font-size:.7rem;font-weight:700;letter-spacing:1px;margin-top:8px;}
+  .qr-status.ok{background:rgba(0,255,136,.15);color:var(--green);border:1px solid var(--green);}
+  .qr-status.warn{background:rgba(255,215,0,.15);color:var(--yellow);border:1px solid var(--yellow);}
+  .qr-status.err{background:rgba(255,45,85,.15);color:var(--red);border:1px solid var(--red);}
   @media(max-width:500px){.chrono-display{font-size:3.5rem;}.btn-plot{width:130px;height:130px;}.info-grid{grid-template-columns:1fr 1fr;}}
 </style>
 </head>
@@ -290,8 +295,8 @@
     <p style="font-size:.8rem;color:var(--muted);margin-bottom:10px;">
       Ouvrez cette page sur votre PC ou smartphone pour recevoir les données scannées :
     </p>
-    <div style="background:var(--surface2);border-radius:8px;padding:12px;font-family:'DM Mono',monospace;font-size:.8rem;color:var(--accent);">
-      agregateur-vma.html
+    <div style="background:var(--surface2);border-radius:8px;padding:12px;font-family:'DM Mono',monospace;font-size:.8rem;color:var(--accent);word-break:break-all;">
+      <span id="agregateurUrlDisplay">https://epsapp.github.io/htmltopwa-claude/agregateur-vma.html</span>
     </div>
   </div>
   <div class="actions">
@@ -301,6 +306,11 @@
 </div>
 
 <script>
+// ════════════════════════════════════════════════════════
+//  URL DE BASE DE L'AGRÉGATEUR (à modifier si besoin)
+// ════════════════════════════════════════════════════════
+const AGGREGATOR_BASE_URL = 'https://epsapp.github.io/htmltopwa-claude/agregateur-vma.html';
+
 const S={
   distPiste:400,distPlots:25,nomSeance:'',nomClasse:'',dateSeance:'',
   series:[],
@@ -637,45 +647,75 @@ function renderResults(){
   wrap.innerHTML=html;
 }
 
-// ── QR Code ──
-function buildPayload(){
-  const payload={
-    v:1,
+// ════════════════════════════════════════════════════════
+//  QR CODE — GÉNÉRATION AVEC URL ABSOLUE
+// ════════════════════════════════════════════════════════
+function buildRunnerPayload(r){
+  const runner=S.runners[r];
+  // Payload compact : clés courtes pour réduire la taille
+  const runnerData={n:runner.name,v:runner.vma,s:[]};
+  S.series.forEach((serie,si)=>{
+    const d=S.data[r][si];
+    const passages=d.passages.length;
+    const dist=passages*S.distPlots;
+    const vitMoy=serie.dureeMs>0?(dist/(serie.dureeMs/1000)*3.6):0;
+    const cible=runner.projets[si];
+    const ecart=vitMoy-cible;
+    runnerData.s.push({
+      i:si,
+      d:serie.dureeMs,
+      c:serie.nbCols,
+      ci:cible,
+      pv:Math.round(cible/runner.vma*100),
+      p:passages,
+      di:dist,
+      vm:parseFloat(vitMoy.toFixed(2)),
+      ec:parseFloat(ecart.toFixed(2)),
+      z:Math.abs(ecart)<=0.5,
+      m:d.marcheIndices.length
+    });
+  });
+  return {
+    se:S.nomSeance,
+    cl:S.nomClasse,
+    da:S.dateSeance,
+    dp:S.distPlots,
+    dpi:S.distPiste,
+    sr:S.series.map(s=>({d:s.dureeMs,c:s.nbCols})),
+    // L'agrégateur attend "runner" avec name, vma, series[]
+    runner:{
+      name:runner.name,
+      vma:runner.vma,
+      series:S.series.map((serie,si)=>{
+        const d=S.data[r][si];
+        const passages=d.passages.length;
+        const dist=passages*S.distPlots;
+        const vitMoy=serie.dureeMs>0?(dist/(serie.dureeMs/1000)*3.6):0;
+        const cible=runner.projets[si];
+        const ecart=vitMoy-cible;
+        return {
+          idx:si,
+          dureeMs:serie.dureeMs,
+          nbCols:serie.nbCols,
+          cible:cible,
+          pctVma:Math.round(cible/runner.vma*100),
+          passages:passages,
+          dist:dist,
+          vitMoy:parseFloat(vitMoy.toFixed(2)),
+          ecart:parseFloat(ecart.toFixed(2)),
+          zone:Math.abs(ecart)<=0.5,
+          marches:d.marcheIndices.length
+        };
+      })
+    },
+    // Métadonnées séance (format attendu par l'agrégateur)
     seance:S.nomSeance,
     classe:S.nomClasse,
     date:S.dateSeance,
     distPlots:S.distPlots,
     distPiste:S.distPiste,
-    series:S.series.map(s=>({dureeMs:s.dureeMs,nbCols:s.nbCols})),
-    runners:[]
+    series:S.series.map(s=>({dureeMs:s.dureeMs,nbCols:s.nbCols}))
   };
-  for(let r=0;r<2;r++){
-    const runner=S.runners[r];
-    const runnerData={name:runner.name,vma:runner.vma,series:[]};
-    S.series.forEach((serie,si)=>{
-      const d=S.data[r][si];
-      const passages=d.passages.length;
-      const dist=passages*S.distPlots;
-      const vitMoy=serie.dureeMs>0?(dist/(serie.dureeMs/1000)*3.6):0;
-      const cible=runner.projets[si];
-      const ecart=vitMoy-cible;
-      runnerData.series.push({
-        idx:si,
-        dureeMs:serie.dureeMs,
-        nbCols:serie.nbCols,
-        cible:cible,
-        pctVma:Math.round(cible/runner.vma*100),
-        passages:passages,
-        dist:dist,
-        vitMoy:parseFloat(vitMoy.toFixed(2)),
-        ecart:parseFloat(ecart.toFixed(2)),
-        zone:Math.abs(ecart)<=0.5,
-        marches:d.marcheIndices.length
-      });
-    });
-    payload.runners.push(runnerData);
-  }
-  return payload;
 }
 
 function goStep5(){
@@ -683,48 +723,102 @@ function goStep5(){
   const grid=document.getElementById('qrGrid');
   grid.innerHTML='<p style="color:var(--muted);text-align:center;padding:20px;">Génération des QR codes…</p>';
 
+  // Afficher l'URL de l'agrégateur
+  document.getElementById('agregateurUrlDisplay').textContent = AGGREGATOR_BASE_URL;
+
   setTimeout(()=>{
     grid.innerHTML='';
-    const payload=buildPayload();
 
-    // Un QR par coureur
     for(let r=0;r<2;r++){
-      const runnerPayload={
-        v:payload.v,seance:payload.seance,classe:payload.classe,
-        date:payload.date,distPlots:payload.distPlots,distPiste:payload.distPiste,
-        series:payload.series,
-        runner:payload.runners[r]
-      };
-      const json=JSON.stringify(runnerPayload);
-      const compressed=LZString.compressToEncodedURIComponent(json);
-      const url='agregateur-vma.html?d='+compressed;
-      const byteSize=new TextEncoder().encode(compressed).length;
-      const kb=(byteSize/1024).toFixed(1);
+      const runnerPayload = buildRunnerPayload(r);
+      const json = JSON.stringify(runnerPayload);
+      const compressed = LZString.compressToEncodedURIComponent(json);
 
-      const card=document.createElement('div');
-      card.className='qr-card';
-      card.innerHTML=`
-        <h3>${payload.runners[r].name}</h3>
-        <p>${payload.seance}${payload.classe?' · '+payload.classe:''} · ${payload.date}</p>
+      // ═══ URL ABSOLUE vers l'agrégateur ═══
+      const fullUrl = AGGREGATOR_BASE_URL + '?d=' + compressed;
+      const byteSize = new Blob([fullUrl]).size;
+      const kb = (byteSize / 1024).toFixed(1);
+
+      // Vérifier la capacité QR
+      // QR Code Level L : ~4296 chars alphanumériques, ~2953 bytes binaires
+      // QR Code Level M : ~2331 chars alphanumériques
+      const tooLarge = fullUrl.length > 2900;
+
+      const card = document.createElement('div');
+      card.className = 'qr-card';
+
+      card.innerHTML = `
+        <h3>${S.runners[r].name}</h3>
+        <p>${S.nomSeance}${S.nomClasse?' · '+S.nomClasse:''} · ${S.dateSeance}</p>
         <div class="qr-wrap" id="qr${r}"></div>
-        <div class="qr-size-note">Taille données : ${kb} ko</div>
-        <div class="scanner-url">${url.slice(0,120)}${url.length>120?'…':''}</div>`;
+        <div class="qr-size-note">Données : ${kb} ko · ${fullUrl.length} caractères</div>
+        ${tooLarge
+          ? '<div class="qr-status warn">⚠ Données volumineuses — scan rapproché recommandé</div>'
+          : '<div class="qr-status ok">✓ Taille OK pour le scan</div>'
+        }
+        <div style="margin-top:10px;">
+          <button class="btn btn-secondary" style="font-size:.8rem;padding:6px 14px;letter-spacing:1px;"
+            onclick="copyQrUrl(${r})">📋 Copier l'URL</button>
+        </div>
+        <div class="scanner-url" id="qrUrl${r}">${fullUrl.length > 150 ? fullUrl.slice(0,150)+'…' : fullUrl}</div>
+        <input type="hidden" id="qrFullUrl${r}" value="">`;
+
       grid.appendChild(card);
 
-      // Taille QR adaptée
-      const qrSize = byteSize > 1500 ? 200 : 180;
+      // Stocker l'URL complète dans le champ hidden
+      document.getElementById('qrFullUrl'+r).value = fullUrl;
+
+      // Générer le QR code
+      const qrContainer = document.getElementById('qr'+r);
       try {
-        new QRCode(document.getElementById('qr'+r),{
-          text:url,
-          width:qrSize,height:qrSize,
-          correctLevel:QRCode.CorrectLevel.M
+        // Utiliser Level L (Low) pour maximiser la capacité de données
+        // et une taille suffisante pour un scan fiable
+        const qrSize = tooLarge ? 256 : 220;
+        new QRCode(qrContainer, {
+          text: fullUrl,
+          width: qrSize,
+          height: qrSize,
+          correctLevel: QRCode.CorrectLevel.L,  // Level L = plus de capacité
+          colorDark: '#000000',
+          colorLight: '#ffffff'
         });
+
+        // Marquer comme OK
+        card.classList.add('scanned');
+        card.style.borderColor = 'var(--green)';
+        setTimeout(() => { card.style.borderColor = ''; card.classList.remove('scanned'); }, 1500);
+
       } catch(e) {
-        document.getElementById('qr'+r).innerHTML=
-          `<p style="color:var(--red);font-size:.75rem;">Données trop volumineuses pour un QR code.<br>Utilisez l'export CSV à la place.</p>`;
+        console.error('QR generation error for runner '+r+':', e);
+        qrContainer.innerHTML = `
+          <div style="padding:20px;text-align:center;">
+            <p style="color:var(--red);font-size:.85rem;font-weight:700;margin-bottom:10px;">
+              ⚠ Données trop volumineuses pour un QR code
+            </p>
+            <p style="color:var(--muted);font-size:.75rem;">
+              ${fullUrl.length} caractères · Limite ≈ 2900<br>
+              Utilisez le bouton "Copier l'URL" ou l'export CSV.
+            </p>
+          </div>`;
       }
     }
   }, 100);
+}
+
+function copyQrUrl(r){
+  const url = document.getElementById('qrFullUrl'+r).value;
+  if(!url) return;
+  navigator.clipboard.writeText(url).then(()=>{
+    const btn = event.target;
+    const orig = btn.textContent;
+    btn.textContent = '✓ Copié !';
+    btn.style.color = 'var(--green)';
+    btn.style.borderColor = 'var(--green)';
+    setTimeout(()=>{ btn.textContent = orig; btn.style.color = ''; btn.style.borderColor = ''; }, 2000);
+  }).catch(()=>{
+    // Fallback : sélectionner le texte
+    prompt('Copiez cette URL :', url);
+  });
 }
 
 // ── Export CSV/XLS ──
@@ -780,13 +874,10 @@ if('serviceWorker' in navigator){
     navigator.serviceWorker.register('./service-worker.js', { scope: './' })
       .then(reg => {
         console.log('[PWA] Service Worker enregistré :', reg.scope);
-
-        // Détecter une mise à jour disponible
         reg.addEventListener('updatefound', () => {
           const newWorker = reg.installing;
           newWorker.addEventListener('statechange', () => {
             if(newWorker.state === 'installed' && navigator.serviceWorker.controller){
-              // Nouvelle version disponible — proposer de recharger
               const banner = document.createElement('div');
               banner.style.cssText = `
                 position:fixed;bottom:16px;left:50%;transform:translateX(-50%);
