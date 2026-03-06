@@ -567,6 +567,7 @@ const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)||
             (navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
 
 async function startScanner(){
+  history.pushState({modal:'scanner'},'');
   document.getElementById('scannerModal').classList.add('open');
   setStatus('Initialisation…','');
   scannerActive=true; scanCount=0; lastScanned='';
@@ -785,6 +786,13 @@ function setStatus(msg,cls){
 
 document.getElementById('scannerModal').addEventListener('click',function(e){
   if(e.target===this) stopScanner();
+});
+
+// Bouton retour navigateur/appareil : ferme le scanner sans quitter la page
+window.addEventListener('popstate',function(e){
+  if(document.getElementById('scannerModal').classList.contains('open')){
+    stopScanner();
+  }
 });
 
 // ════════════════════════════════════════════════════════
