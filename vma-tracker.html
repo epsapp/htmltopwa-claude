@@ -141,6 +141,51 @@
   .btn-stop{padding:8px 16px;border-radius:8px;border:2px solid var(--red);background:transparent;color:var(--red);font-family:'Bebas Neue',sans-serif;font-size:.85rem;letter-spacing:1.5px;cursor:pointer;transition:all .2s;}
   .btn-stop:hover{background:var(--red);color:#fff;}
   @media(max-width:500px){.chrono-display{font-size:3.2rem;}.btn-plot{width:120px;height:120px;}.info-grid{grid-template-columns:1fr 1fr;}}
+  /* ── SPLIT-SCREEN MODE 4 ── */
+  .split-screen{display:flex;gap:8px;flex:1;}
+  .binome-col{flex:1;display:flex;flex-direction:column;gap:5px;border:2px solid var(--border);border-radius:var(--radius);padding:8px;background:var(--surface);min-width:0;overflow:hidden;}
+  .binome-col.col-a{border-color:var(--accent);}
+  .binome-col.col-b{border-color:var(--green);}
+  .col-header{font-family:'Bebas Neue',sans-serif;font-size:.85rem;letter-spacing:2px;text-align:center;padding:3px 0 5px;border-bottom:1px solid var(--border);margin-bottom:4px;}
+  .col-header.col-a{color:var(--accent);}
+  .col-header.col-b{color:var(--green);}
+  .col-runner-name{font-family:'Bebas Neue',sans-serif;font-size:1.05rem;letter-spacing:1px;color:var(--accent);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .col-observer-row{font-size:.65rem;color:var(--muted);text-align:center;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .col-series-pills{display:flex;flex-wrap:wrap;gap:3px;justify-content:center;margin:3px 0;}
+  .col-speed-info{display:grid;grid-template-columns:1fr 1fr 1fr;gap:3px;margin:3px 0;}
+  .col-speed-box{background:var(--surface2);border-radius:5px;padding:3px 4px;text-align:center;border:1px solid var(--border);}
+  .col-speed-box .v{font-family:'Bebas Neue',sans-serif;font-size:.95rem;letter-spacing:1px;display:block;}
+  .col-speed-box .l{font-size:.55rem;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);}
+  .col-feedback{text-align:center;font-family:'Bebas Neue',sans-serif;font-size:.75rem;letter-spacing:1.5px;padding:3px;border-radius:5px;transition:all .3s;}
+  .col-feedback.ok{background:rgba(0,255,136,.15);color:var(--green);border:1px solid var(--green);}
+  .col-feedback.fast{background:rgba(255,45,85,.15);color:var(--red);border:1px solid var(--red);}
+  .col-feedback.slow{background:rgba(255,215,0,.15);color:var(--yellow);border:1px solid var(--yellow);}
+  .col-feedback.hidden{opacity:0;}
+  .col-plot-wrap{display:flex;justify-content:center;margin:4px 0;}
+  .btn-col-plot{width:72px;height:72px;border-radius:50%;border:3px solid var(--accent);background:var(--surface2);color:var(--accent);font-family:'Bebas Neue',sans-serif;font-size:.8rem;letter-spacing:1px;cursor:pointer;transition:all .15s;user-select:none;display:flex;align-items:center;justify-content:center;}
+  .btn-col-plot:active{transform:scale(.9);background:rgba(255,61,154,.1);}
+  .btn-col-plot.disabled{opacity:.3;pointer-events:none;}
+  .col-actions{display:flex;gap:4px;justify-content:center;flex-wrap:wrap;}
+  .btn-col-marche{padding:4px 8px;border-radius:5px;border:1px solid var(--red);background:transparent;color:var(--red);font-family:'Bebas Neue',sans-serif;font-size:.7rem;letter-spacing:1px;cursor:pointer;transition:all .2s;}
+  .btn-col-marche.active{background:var(--red);color:#fff;}
+  .btn-col-stop{padding:4px 8px;border-radius:5px;border:1px solid var(--muted);background:transparent;color:var(--muted);font-family:'Bebas Neue',sans-serif;font-size:.7rem;letter-spacing:1px;cursor:pointer;transition:all .2s;}
+  .btn-col-stop:hover:not(:disabled){border-color:var(--red);color:var(--red);}
+  .btn-col-stop:disabled{opacity:.4;cursor:not-allowed;}
+  .col-dispensed-info{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;flex:1;padding:10px 0;}
+  /* Global chrono bar */
+  .split-chrono-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:10px 16px;margin-bottom:8px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+  .split-chrono{font-family:'Bebas Neue',sans-serif;font-size:2.8rem;letter-spacing:4px;color:var(--accent);line-height:1;min-width:90px;}
+  .split-serie-info{font-size:.75rem;color:var(--muted);flex:1;}
+  .split-bar-wrap{flex:2;min-width:80px;height:6px;background:var(--surface2);border-radius:3px;overflow:hidden;}
+  .split-bar{height:100%;background:var(--accent);transition:width .5s linear,background .3s;border-radius:3px;}
+  .split-next-btn{background:var(--green);color:var(--bg);border:none;border-radius:8px;padding:8px 16px;font-family:'Bebas Neue',sans-serif;font-size:.9rem;letter-spacing:2px;cursor:pointer;display:none;}
+  /* Screen 2b */
+  .binome-setup-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:14px;}
+  .binome-setup-card h2{font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:2px;color:var(--accent);margin-bottom:12px;}
+  .role-choice{display:flex;gap:0;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);margin-top:8px;}
+  .role-opt{flex:1;padding:12px 8px;text-align:center;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.85rem;background:var(--surface2);color:var(--muted);border:none;transition:all .2s;}
+  .role-opt.active{background:var(--accent);color:var(--bg);font-weight:700;}
+  @media(max-width:480px){.split-chrono{font-size:2rem;}.btn-col-plot{width:60px;height:60px;font-size:.7rem;}}
 </style>
 </head>
 <body>
@@ -197,6 +242,15 @@
   <div class="actions"><button class="btn btn-secondary" onclick="goStep(0)">← Retour</button><button class="btn btn-primary" onclick="goStep3()">Suivant →</button></div>
 </div>
 
+<!-- ════ SCREEN 2b : QUI COURT EN PREMIER (mode 4 seulement) ════ -->
+<div class="screen" id="screen2b">
+  <div id="firstRunnerContent"></div>
+  <div class="actions">
+    <button class="btn btn-secondary" onclick="goStep(1)">← Retour</button>
+    <button class="btn btn-primary" onclick="goStep3b()">Lancer la séance →</button>
+  </div>
+</div>
+
 <!-- ════ SCREEN 3 : COURSE ════ -->
 <div class="screen" id="screen3">
   <div class="runner-tabs" id="courseTabs" style="margin-bottom:14px;"></div>
@@ -250,6 +304,11 @@ function goStep(n){
   document.querySelectorAll('.screen').forEach(e=>e.classList.remove('active'));
   document.getElementById('screen'+(n+1)).classList.add('active');
   document.querySelectorAll('.step-dot').forEach((d,i)=>{d.classList.toggle('active',i===n);d.classList.toggle('done',i<n);});
+  window.scrollTo(0,0);
+}
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(e=>e.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
   window.scrollTo(0,0);
 }
 
@@ -409,13 +468,284 @@ function goStep3(){
     document.getElementById('tab'+r).textContent=(dispensed?'🩹 ':'👤 ')+name;
     if(dispensed) document.getElementById('tab'+r).classList.add('dispensed');
   }
-  buildCourseUI();goStep(2);
+  if(S.groupSize===4){buildFirstRunnerUI();showScreen('screen2b');}
+  else{buildCourseUI();goStep(2);}
+}
+
+// ════════════════════════════════════════════════════════
+//  SCREEN 2b : QUI COURT EN PREMIER (mode 4)
+// ════════════════════════════════════════════════════════
+// G = état global split-screen
+var G={colRole:[0,2],globalInterval:null,globalElapsed:0,globalRunning:false,globalFinished:false,currentSerie:0,col:[{plotCount:0,marcheNext:false,stopped:false,stoppedAt:0,colCount:0},{plotCount:0,marcheNext:false,stopped:false,stoppedAt:0,colCount:0}]};
+
+function buildFirstRunnerUI(){
+  var html='';
+  for(var b=0;b<2;b++){
+    var r0=b*2,r1=b*2+1;
+    var n0=S.runners[r0].name,n1=S.runners[r1].name;
+    var d0=S.runners[r0].dispensed,d1=S.runners[r1].dispensed;
+    html+='<div class="binome-setup-card"><h2>Binôme '+(b===0?'A':'B')+'</h2>';
+    if(d0&&d1){html+='<p style="color:var(--muted);font-size:.85rem;">Les deux élèves sont dispensés.</p>';}
+    else if(d0){html+='<p style="font-size:.85rem;"><b style="color:var(--accent)">'+n1+'</b> court ('+n0+' est dispensé)</p>';}
+    else if(d1){html+='<p style="font-size:.85rem;"><b style="color:var(--accent)">'+n0+'</b> court ('+n1+' est dispensé)</p>';}
+    else{
+      html+='<p style="color:var(--muted);font-size:.8rem;margin-bottom:6px;">Qui court en premier pour cette série ?</p>'
+        +'<div class="role-choice" id="roleChoice'+b+'">'
+        +'<button class="role-opt active" id="roleOpt'+b+'_0" onclick="setFirstRunner('+b+','+r0+')">🏃 '+n0+'<br><span style="font-size:.65rem;opacity:.8;">Court en 1er</span></button>'
+        +'<button class="role-opt" id="roleOpt'+b+'_1" onclick="setFirstRunner('+b+','+r1+')">🏃 '+n1+'<br><span style="font-size:.65rem;opacity:.8;">Court en 1er</span></button>'
+        +'</div>';
+    }
+    html+='</div>';
+  }
+  document.getElementById('firstRunnerContent').innerHTML=html;
+  // Init G.colRole
+  for(var b=0;b<2;b++){
+    var r0=b*2,r1=b*2+1,d0=S.runners[r0].dispensed,d1=S.runners[r1].dispensed;
+    G.colRole[b]=d0?r1:r0;
+  }
+}
+
+function setFirstRunner(binome,runnerIdx){
+  G.colRole[binome]=runnerIdx;
+  var r0=binome*2,r1=binome*2+1;
+  document.getElementById('roleOpt'+binome+'_0').classList.toggle('active',runnerIdx===r0);
+  document.getElementById('roleOpt'+binome+'_1').classList.toggle('active',runnerIdx===r1);
+}
+
+function goStep3b(){
+  buildCourseUI4();goStep(2);
+}
+
+// ════════════════════════════════════════════════════════
+//  STEP 3: COURSE — MODE 4 SPLIT-SCREEN
+// ════════════════════════════════════════════════════════
+function buildCourseUI4(){
+  // Reset G
+  G.globalElapsed=0;G.globalRunning=false;G.globalFinished=false;G.currentSerie=0;
+  clearInterval(G.globalInterval);G.globalInterval=null;
+  G.col=[{plotCount:0,marcheNext:false,stopped:false,stoppedAt:0,colCount:0},{plotCount:0,marcheNext:false,stopped:false,stoppedAt:0,colCount:0}];
+
+  var tabs=document.getElementById('courseTabs');tabs.innerHTML='';
+  var panels=document.getElementById('coursePanels');
+  panels.innerHTML=''
+    // Global chrono bar
+    +'<div class="split-chrono-wrap">'
+    +'  <div class="split-chrono" id="schrono">00:00</div>'
+    +'  <div class="split-serie-info" id="sserieInfo">Série 1/'+S.series.length+'</div>'
+    +'  <div class="split-bar-wrap"><div class="split-bar" id="sbar" style="width:0%"></div></div>'
+    +'  <button id="sbtnStart" class="btn btn-primary" onclick="toggleGlobalChrono()">▶ DÉMARRER</button>'
+    +'  <button id="sbtnNext" class="split-next-btn" onclick="nextSeriesAll()">→ SUIVANTE</button>'
+    +'</div>'
+    // Split columns
+    +'<div class="split-screen" id="splitCols"></div>'
+    // Series pills
+    +'<div class="series-status-list" id="globalPills" style="justify-content:center;margin-top:6px;"></div>';
+
+  // Build each column
+  var splitCols=document.getElementById('splitCols');
+  for(var col=0;col<2;col++){
+    var colDiv=document.createElement('div');
+    colDiv.className='binome-col col-'+(col===0?'a':'b');
+    colDiv.id='col'+col;
+    splitCols.appendChild(colDiv);
+  }
+  renderColHeaders();
+  renderGlobalPills();
+}
+
+function getColRunner(col){return G.colRole[col];}
+function getColObserver(col){
+  var r=G.colRole[col];var binome=col;var r0=binome*2,r1=binome*2+1;
+  return r===r0?r1:r0;
+}
+
+function renderColHeaders(){
+  for(var col=0;col<2;col++){
+    var colDiv=document.getElementById('col'+col);if(!colDiv)return;
+    var runnerIdx=getColRunner(col);var observerIdx=getColObserver(col);
+    var runner=S.runners[runnerIdx];var observer=S.runners[observerIdx];
+    var bothDispensed=runner.dispensed&&observer.dispensed;
+    var si=G.currentSerie;
+    var cible=(!runner.dispensed&&runner.projets&&runner.projets[si])?runner.projets[si]:'—';
+    var observerName=observer.dispensed?observer.name+' 🩹':observer.name;
+    colDiv.innerHTML='<div class="col-header col-'+(col===0?'a':'b')+'">BINÔME '+(col===0?'A':'B')+'</div>';
+    if(bothDispensed){
+      colDiv.innerHTML+='<div class="col-dispensed-info"><div style="font-size:1.5rem">🩹</div><div style="font-size:.85rem;color:var(--muted)">Tous dispensés</div></div>';
+      return;
+    }
+    colDiv.innerHTML+=''
+      +'<div class="col-runner-name" id="colRunnerName'+col+'">🏃 '+runner.name+'</div>'
+      +'<div class="col-observer-row" id="colObsRow'+col+'">👁 '+observerName+'</div>'
+      +'<div style="text-align:center;font-size:.65rem;color:var(--muted);">Cible : <b id="colCible'+col+'" style="color:var(--accent)">'+cible+' km/h</b></div>'
+      +'<div class="col-speed-info">'
+      +'<div class="col-speed-box"><span class="v accent" id="colVit'+col+'">—</span><span class="l">Vit km/h</span></div>'
+      +'<div class="col-speed-box"><span class="v" id="colEcart'+col+'">—</span><span class="l">Écart</span></div>'
+      +'<div class="col-speed-box"><span class="v accent" id="colPlots'+col+'">0</span><span class="l">Plots</span></div>'
+      +'</div>'
+      +'<div class="col-feedback hidden" id="colFeedback'+col+'">—</div>'
+      +'<div class="col-plot-wrap"><button class="btn-col-plot disabled" id="colPlotBtn'+col+'" onclick="clickPlotCol('+col+')">PLOT</button></div>'
+      +'<div class="col-actions">'
+      +'<button class="btn-col-marche" id="colMarcheBtn'+col+'" onclick="toggleMarcheCol('+col+')">🚶 MARCHE</button>'
+      +'<button class="btn-col-stop" id="colStopBtn'+col+'" onclick="stopColEarly('+col+')" disabled>⏹ ARRÊTER</button>'
+      +'</div>';
+  }
+}
+
+function renderGlobalPills(){
+  var wrap=document.getElementById('globalPills');if(!wrap)return;
+  wrap.innerHTML='';
+  S.series.forEach(function(_,i){
+    var stoppedA=S.data[G.colRole[0]]&&S.data[G.colRole[0]][i]&&S.data[G.colRole[0]][i].stopped;
+    var stoppedB=S.data[G.colRole[1]]&&S.data[G.colRole[1]][i]&&S.data[G.colRole[1]][i].stopped;
+    var done=S.data[G.colRole[0]]&&S.data[G.colRole[0]][i]&&S.data[G.colRole[0]][i].passages&&S.data[G.colRole[0]][i].passages.length>0;
+    var cls='series-pill'+(stoppedA||stoppedB?' stopped':i===G.currentSerie?' active':done?' done':'');
+    var pill=document.createElement('div');pill.className=cls;
+    pill.textContent='S'+(i+1);
+    wrap.appendChild(pill);
+  });
+}
+
+function toggleGlobalChrono(){
+  if(G.globalFinished){return;}
+  if(!G.globalRunning){
+    G.globalRunning=true;
+    var si=G.currentSerie;var serie=S.series[si];
+    // Init col data if first start
+    for(var col=0;col<2;col++){
+      var r=getColRunner(col);if(S.runners[r].dispensed)continue;
+      if(!G.col[col].started){
+        G.col[col].started=true;G.col[col].colCount=0;G.col[col].plotCount=0;
+        S.data[r][si].colStarts=[G.globalElapsed];
+      }
+      document.getElementById('colStopBtn'+col).disabled=false;
+      document.getElementById('colPlotBtn'+col).classList.remove('disabled');
+    }
+    var startRef=Date.now()-G.globalElapsed;
+    document.getElementById('sbtnStart').textContent='⏸ PAUSE';
+    document.getElementById('sbtnStart').className='btn btn-danger';
+    G.globalInterval=setInterval(function(){
+      G.globalElapsed=Date.now()-startRef;
+      var pct=Math.min(G.globalElapsed/serie.dureeMs*100,100);
+      document.getElementById('schrono').textContent=msToDurStr(G.globalElapsed);
+      document.getElementById('sbar').style.width=pct+'%';
+      document.getElementById('sbar').style.background=pct>95?'var(--red)':pct>80?'var(--yellow)':'var(--accent)';
+      // Column tracking
+      for(var col=0;col<2;col++){
+        var r=getColRunner(col);if(S.runners[r].dispensed||G.col[col].stopped)continue;
+        var d=S.data[r][si];
+        var colElapsed=G.globalElapsed-(d.colStarts[G.col[col].colCount]||0);
+        if(colElapsed>=90000&&G.col[col].colCount<serie.nbCols-1){
+          G.col[col].colCount++;G.col[col].plotCount=0;d.colStarts.push(G.globalElapsed);
+        }
+      }
+      if(G.globalElapsed>=serie.dureeMs){
+        clearInterval(G.globalInterval);G.globalRunning=false;G.globalFinished=true;
+        G.globalElapsed=serie.dureeMs;
+        document.getElementById('schrono').textContent=msToDurStr(serie.dureeMs);
+        document.getElementById('sbar').style.width='100%';document.getElementById('sbar').style.background='var(--green)';
+        document.getElementById('sbtnStart').textContent='✓ FIN';document.getElementById('sbtnStart').className='btn btn-success';document.getElementById('sbtnStart').disabled=true;
+        for(var col=0;col<2;col++){document.getElementById('colPlotBtn'+col).classList.add('disabled');document.getElementById('colStopBtn'+col).disabled=true;}
+        document.getElementById('sbtnNext').style.display=S.currentSerie+1<S.series.length?'inline-flex':'none';
+        document.getElementById('sbtnNext').style.display=(G.currentSerie+1<S.series.length)?'inline-flex':'none';
+      }
+    },100);
+  } else {
+    clearInterval(G.globalInterval);G.globalRunning=false;
+    document.getElementById('sbtnStart').textContent='▶ REPRENDRE';
+    document.getElementById('sbtnStart').className='btn btn-primary';
+    for(var col=0;col<2;col++){document.getElementById('colPlotBtn'+col).classList.add('disabled');}
+  }
+}
+
+function clickPlotCol(col){
+  if(!G.globalRunning)return;
+  var si=G.currentSerie;var r=getColRunner(col);
+  if(S.runners[r].dispensed||G.col[col].stopped)return;
+  var d=S.data[r][si];var c=G.col[col];
+  var isM=c.marcheNext;
+  d.passages.push({t:G.globalElapsed,col:c.colCount,isMarche:isM});
+  if(isM)d.marcheIndices.push(d.passages.length-1);
+  c.marcheNext=false;document.getElementById('colMarcheBtn'+col).classList.remove('active');
+  c.plotCount++;
+  document.getElementById('colPlots'+col).textContent=d.passages.length;
+  // Speed calc
+  var colPassages=d.passages.filter(function(p){return p.col===c.colCount;});
+  var colStart=d.colStarts[c.colCount]||0;
+  var colElapsedNow=G.globalElapsed-colStart;
+  var cible=S.runners[r].projets[si];
+  if(colElapsedNow>0&&colPassages.length>0){
+    var vitMoy=colPassages.length*S.distPlots/(colElapsedNow/1000)*3.6;
+    var ecart=vitMoy-cible;
+    document.getElementById('colVit'+col).textContent=vitMoy.toFixed(1);
+    document.getElementById('colVit'+col).className='v '+(Math.abs(ecart)<=0.5?'green':ecart>0.5?'red':'yellow');
+    document.getElementById('colEcart'+col).textContent=(ecart>=0?'+':'')+ecart.toFixed(1);
+    document.getElementById('colEcart'+col).className='v '+(Math.abs(ecart)<=0.5?'green':ecart>0.5?'red':'yellow');
+    var fb=document.getElementById('colFeedback'+col);
+    if(Math.abs(ecart)<=0.5){fb.className='col-feedback ok';fb.textContent='✓ ZONE';}
+    else if(ecart>0.5){fb.className='col-feedback fast';fb.textContent='⚡ RAPIDE';}
+    else{fb.className='col-feedback slow';fb.textContent='🐢 LENT';}
+  }
+}
+
+function toggleMarcheCol(col){
+  G.col[col].marcheNext=!G.col[col].marcheNext;
+  document.getElementById('colMarcheBtn'+col).classList.toggle('active',G.col[col].marcheNext);
+}
+
+function stopColEarly(col){
+  var si=G.currentSerie;var r=getColRunner(col);
+  if(G.col[col].stopped)return;
+  if(!confirm(S.runners[r].name+' : arrêter la série '+(si+1)+' ?\nLes données partielles seront conservées.'))return;
+  G.col[col].stopped=true;G.col[col].stoppedAt=G.globalElapsed;
+  var d=S.data[r][si];d.stopped=true;d.stoppedAt=G.globalElapsed;
+  document.getElementById('colPlotBtn'+col).classList.add('disabled');
+  document.getElementById('colStopBtn'+col).disabled=true;
+  document.getElementById('colFeedback'+col).className='col-feedback slow';
+  document.getElementById('colFeedback'+col).textContent='⏹ ARRÊTÉE';
+  // If both columns stopped or finished → show next
+  var bothDone=true;
+  for(var c=0;c<2;c++){
+    var rc=getColRunner(c);
+    if(!S.runners[rc].dispensed&&!G.col[c].stopped&&!G.globalFinished) bothDone=false;
+  }
+  if(bothDone&&G.currentSerie+1<S.series.length){
+    clearInterval(G.globalInterval);G.globalRunning=false;
+    document.getElementById('sbtnStart').disabled=true;
+    document.getElementById('sbtnNext').style.display='inline-flex';
+  }
+}
+
+function nextSeriesAll(){
+  G.currentSerie++;
+  if(G.currentSerie>=S.series.length){alert('Toutes les séries terminées !');return;}
+  // Swap roles in each binôme
+  for(var col=0;col<2;col++){
+    var r0=col*2,r1=col*2+1;
+    var prevRunner=G.colRole[col];
+    G.colRole[col]=prevRunner===r0?r1:r0;
+  }
+  // Reset global chrono and col states
+  clearInterval(G.globalInterval);G.globalInterval=null;
+  G.globalElapsed=0;G.globalRunning=false;G.globalFinished=false;
+  for(var col=0;col<2;col++) G.col[col]={plotCount:0,marcheNext:false,stopped:false,stoppedAt:0,colCount:0,started:false};
+  document.getElementById('schrono').textContent='00:00';
+  document.getElementById('sbar').style.width='0%';document.getElementById('sbar').style.background='var(--accent)';
+  document.getElementById('sbtnStart').textContent='▶ DÉMARRER';document.getElementById('sbtnStart').className='btn btn-primary';document.getElementById('sbtnStart').disabled=false;
+  document.getElementById('sbtnNext').style.display='none';
+  document.getElementById('sserieInfo').textContent='Série '+(G.currentSerie+1)+'/'+S.series.length;
+  for(var col=0;col<2;col++){
+    document.getElementById('colPlotBtn'+col).classList.add('disabled');
+    document.getElementById('colStopBtn'+col).disabled=true;
+  }
+  renderColHeaders();
+  renderGlobalPills();
 }
 
 // ════════════════════════════════════════════════════════
 //  STEP 3: COURSE
 // ════════════════════════════════════════════════════════
 function buildCourseUI(){
+  if(S.groupSize===4){buildCourseUI4();return;}
   var tabs=document.getElementById('courseTabs');tabs.innerHTML='';
   var panels=document.getElementById('coursePanels');panels.innerHTML='';
   var activeRunners=[];
@@ -648,9 +978,12 @@ function renderTable(r){
 //  STEP 4: RÉSULTATS
 // ════════════════════════════════════════════════════════
 function goStep4(){
-  // Check if any chrono still running
-  for(var r=0;r<S.groupSize;r++){
-    if(S.chrono[r]&&S.chrono[r].running){alert('Terminez ou arrêtez toutes les séries en cours.');return;}
+  if(S.groupSize===4){
+    if(G.globalRunning){alert('La séance est en cours. Mettez en pause ou attendez la fin.');return;}
+  } else {
+    for(var r=0;r<S.groupSize;r++){
+      if(S.chrono[r]&&S.chrono[r].running){alert('Terminez ou arrêtez toutes les séries en cours.');return;}
+    }
   }
   renderResults();goStep(3);
 }
