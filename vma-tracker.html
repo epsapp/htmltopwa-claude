@@ -6,7 +6,7 @@
 <title>VMA Tracker — Course de Durée</title>
 <link rel="manifest" href="./manifest.json">
 <meta name="application-name" content="VMA Tracker">
-<meta name="description" content="Application EPS pour chronométrer et analyser les séances de course de durée basées sur la VMA.">
+<meta name="description" content="Application EPS — course de durée basée sur la VMA">
 <meta name="theme-color" content="#4a8cff">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -18,1140 +18,375 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;700&display=swap');
-  :root{--bg:#050d1f;--surface:#0a1628;--surface2:#112244;--border:#1a3060;--accent:#4a8cff;--green:#00ff88;--red:#ff2d55;--yellow:#ffd700;--text:#e8eaf0;--muted:#5a7090;--radius:12px;}
-  *{box-sizing:border-box;margin:0;padding:0;}
-  body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;overflow-x:hidden;}
-  header{display:flex;align-items:center;gap:16px;padding:14px 24px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;}
-  header h1{font-family:'Bebas Neue',sans-serif;font-size:1.6rem;letter-spacing:3px;color:var(--accent);}
-  .btn-home{background:none;border:1px solid var(--border);border-radius:8px;color:var(--muted);padding:6px 12px;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:.85rem;letter-spacing:1px;transition:all .2s;text-decoration:none;display:flex;align-items:center;gap:6px;}
-  .btn-home:hover{border-color:var(--accent);color:var(--accent);}
-  .step-indicator{display:flex;gap:6px;margin-left:auto;}
-  .step-dot{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:.9rem;background:var(--surface2);border:2px solid var(--border);color:var(--muted);transition:all .3s;}
-  .step-dot.active{border-color:var(--accent);color:var(--accent);}
-  .step-dot.done{background:var(--accent);border-color:var(--accent);color:var(--bg);}
-  .screen{display:none;padding:24px;max-width:900px;margin:0 auto;}
-  .screen.active{display:block;}
-  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:22px;margin-bottom:18px;}
-  .card h2{font-family:'Bebas Neue',sans-serif;font-size:1.3rem;letter-spacing:2px;color:var(--accent);margin-bottom:16px;}
-  .card h3{font-family:'DM Sans',sans-serif;font-size:.95rem;font-weight:700;color:var(--text);margin-bottom:10px;}
-  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
-  .form-grid.three{grid-template-columns:1fr 1fr 1fr;}
-  @media(max-width:600px){.form-grid,.form-grid.three{grid-template-columns:1fr;}}
-  .field{display:flex;flex-direction:column;gap:5px;}
-  label{font-size:.7rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);}
-  input,select{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-family:'DM Mono',monospace;font-size:.95rem;width:100%;transition:border-color .2s;}
-  input:focus,select:focus{outline:none;border-color:var(--accent);}
-  .series-row{display:flex;align-items:center;gap:10px;background:var(--surface2);border-radius:8px;padding:10px 14px;margin-bottom:8px;}
-  .series-label{font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:var(--accent);min-width:65px;}
-  .btn{padding:11px 24px;border-radius:8px;border:none;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:2px;transition:all .2s;display:inline-flex;align-items:center;gap:8px;}
-  .btn-primary{background:var(--accent);color:var(--bg);}
-  .btn-primary:hover{background:#3a7aee;}
-  .btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border);}
-  .btn-secondary:hover{border-color:var(--accent);color:var(--accent);}
-  .btn-danger{background:var(--red);color:#fff;}
-  .btn-success{background:var(--green);color:var(--bg);}
-  .btn-warning{background:var(--yellow);color:var(--bg);}
-  .actions{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap;}
-  /* Runner tabs */
-  .runner-tabs{display:flex;gap:0;margin-bottom:18px;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);}
-  .runner-tab{flex:1;padding:12px 8px;text-align:center;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:.85rem;letter-spacing:1.5px;background:var(--surface2);color:var(--muted);border:none;transition:all .2s;}
-  .runner-tab.active{background:var(--accent);color:var(--bg);}
-  .runner-tab.dispensed{opacity:.6;font-style:italic;}
-  /* Checkbox dispensé */
-  .check-row{display:flex;align-items:center;gap:10px;margin:12px 0;padding:10px 14px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);cursor:pointer;}
-  .check-row input[type=checkbox]{width:18px;height:18px;accent-color:var(--accent);cursor:pointer;}
-  .check-row label{cursor:pointer;font-size:.85rem;color:var(--text);text-transform:none;font-weight:400;letter-spacing:0;}
-  .check-row .check-info{font-size:.7rem;color:var(--muted);margin-top:2px;}
-  /* Chrono */
-  .chrono-display{font-family:'Bebas Neue',sans-serif;font-size:4.5rem;letter-spacing:5px;color:var(--accent);text-align:center;line-height:1;}
-  .chrono-target{text-align:center;color:var(--muted);font-size:.8rem;margin-top:4px;font-family:'DM Mono',monospace;}
-  .chrono-bar-wrap{height:6px;background:var(--surface2);border-radius:3px;margin:10px 0;overflow:hidden;}
-  .chrono-bar{height:100%;background:var(--accent);transition:width .5s linear,background .3s;border-radius:3px;}
-  .btn-plot-wrap{display:flex;justify-content:center;margin:16px 0;}
-  .btn-plot{width:140px;height:140px;border-radius:50%;border:4px solid var(--accent);background:var(--surface2);color:var(--accent);font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:2px;cursor:pointer;text-align:center;transition:all .15s;user-select:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;box-shadow:0 0 25px rgba(74,140,255,.1);}
-  .btn-plot:active{transform:scale(.95);box-shadow:0 0 40px rgba(74,140,255,.4);background:rgba(74,140,255,.1);}
-  .btn-plot svg{width:32px;height:32px;}
-  .btn-plot.disabled{opacity:.3;pointer-events:none;}
-  .btn-marche{padding:8px 16px;border-radius:8px;border:2px solid var(--red);background:transparent;color:var(--red);font-family:'Bebas Neue',sans-serif;font-size:.9rem;letter-spacing:2px;cursor:pointer;transition:all .2s;}
-  .btn-marche.active{background:var(--red);color:#fff;}
-  .info-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;}
-  .info-box{background:var(--surface2);border-radius:8px;padding:10px;text-align:center;border:1px solid var(--border);}
-  .info-box .val{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:2px;}
-  .info-box .lbl{font-size:.6rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-top:2px;}
-  .val.green{color:var(--green);}.val.red{color:var(--red);}.val.yellow{color:var(--yellow);}.val.accent{color:var(--accent);}
-  .feedback-badge{text-align:center;font-family:'Bebas Neue',sans-serif;font-size:1.6rem;letter-spacing:3px;padding:10px;border-radius:8px;margin:8px 0;transition:all .3s;}
-  .feedback-badge.ok{background:rgba(0,255,136,.15);color:var(--green);border:1px solid var(--green);}
-  .feedback-badge.fast{background:rgba(255,45,85,.15);color:var(--red);border:1px solid var(--red);}
-  .feedback-badge.slow{background:rgba(255,215,0,.15);color:var(--yellow);border:1px solid var(--yellow);}
-  .feedback-badge.hidden{opacity:0;pointer-events:none;}
-  /* Course runner panel */
-  .runner-panel{display:none;}
-  .runner-panel.active{display:block;}
-  .current-runner-badge{display:inline-flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--accent);border-radius:20px;padding:5px 14px;font-family:'Bebas Neue',sans-serif;font-size:.9rem;letter-spacing:2px;color:var(--accent);margin-bottom:12px;}
-  .dot-live{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 1.2s infinite;}
-  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
-  .series-status-list{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;}
-  .series-pill{padding:3px 12px;border-radius:20px;font-family:'DM Mono',monospace;font-size:.75rem;background:var(--surface2);border:1px solid var(--border);color:var(--muted);}
-  .series-pill.done{border-color:var(--green);color:var(--green);background:rgba(0,255,136,.1);}
-  .series-pill.active{border-color:var(--accent);color:var(--accent);background:rgba(74,140,255,.1);}
-  .series-pill.stopped{border-color:var(--red);color:var(--red);background:rgba(255,45,85,.1);}
-  .tag{display:inline-block;padding:2px 10px;border-radius:20px;font-size:.65rem;font-weight:700;letter-spacing:1px;}
-  .tag-green{background:rgba(0,255,136,.15);color:var(--green);}
-  .tag-red{background:rgba(255,45,85,.15);color:var(--red);}
-  .tag-yellow{background:rgba(255,215,0,.15);color:var(--yellow);}
-  .tag-muted{background:var(--surface2);color:var(--muted);border:1px solid var(--border);}
-  /* Table */
-  .table-wrap{overflow-x:auto;margin-top:14px;}
-  table.passage{border-collapse:collapse;width:100%;font-family:'DM Mono',monospace;font-size:.75rem;}
-  table.passage th{background:var(--surface2);color:var(--muted);padding:5px 8px;text-align:center;border:1px solid var(--border);font-size:.65rem;letter-spacing:1px;}
-  table.passage td{padding:5px 8px;text-align:center;border:1px solid var(--border);min-width:45px;}
-  table.passage td.crossed{color:var(--accent);font-weight:700;}
-  table.passage td.marche{background:rgba(255,45,85,.3);color:var(--red);}
-  /* Results */
-  .result-block{background:var(--surface2);border-radius:8px;padding:14px;margin-bottom:12px;border-left:4px solid var(--accent);}
-  .result-block.dispensed{border-left-color:var(--muted);opacity:.7;}
-  .result-block h3{font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:2px;margin-bottom:8px;color:var(--accent);}
-  /* Modal */
-  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;z-index:999;opacity:0;pointer-events:none;transition:opacity .2s;}
-  .modal-overlay.open{opacity:1;pointer-events:all;}
-  .modal-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:28px;max-width:480px;width:92%;text-align:center;}
-  .modal-box h2{font-family:'Bebas Neue',sans-serif;font-size:1.3rem;letter-spacing:2px;color:var(--accent);margin-bottom:10px;}
-  .modal-box p{color:var(--muted);margin-bottom:20px;font-size:.85rem;}
-  .modal-btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}
-  .modal-btn{flex:1;min-width:100px;padding:12px;border-radius:8px;border:1px solid var(--border);cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:.95rem;letter-spacing:2px;background:var(--surface2);color:var(--text);transition:all .2s;}
-  .modal-btn:hover{border-color:var(--accent);color:var(--accent);}
-  /* QR */
-  .qr-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:18px;}
-  .qr-card{background:var(--surface2);border:2px solid var(--border);border-radius:var(--radius);padding:18px;text-align:center;}
-  .qr-card h3{font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:2px;color:var(--accent);margin-bottom:4px;}
-  .qr-card p{font-size:.7rem;color:var(--muted);margin-bottom:12px;}
-  .qr-wrap{background:#fff;border-radius:8px;padding:10px;display:inline-block;margin-bottom:8px;}
-  .qr-size-note{font-size:.65rem;color:var(--muted);margin-top:4px;}
-  .scanner-url{font-family:'DM Mono',monospace;font-size:.5rem;color:var(--muted);word-break:break-all;margin-top:6px;padding:5px;background:var(--bg);border-radius:4px;max-height:45px;overflow:auto;}
-  .qr-status{border-radius:6px;padding:6px 10px;margin-top:8px;font-size:.7rem;}
-  .qr-status.ok{background:rgba(0,255,136,.1);border:1px solid var(--green);color:var(--green);}
-  .qr-status.warn{background:rgba(255,215,0,.1);border:1px solid var(--yellow);color:var(--yellow);}
-  .qr-status.err{background:rgba(255,45,85,.1);border:1px solid var(--red);color:var(--red);}
-  /* Group selector */
-  .group-selector{display:flex;gap:0;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);margin:14px 0;}
-  .group-opt{flex:1;padding:14px;text-align:center;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:2px;background:var(--surface2);color:var(--muted);border:none;transition:all .2s;}
-  .group-opt.active{background:var(--accent);color:var(--bg);}
-  /* Abandon btn */
-  .btn-stop{padding:8px 16px;border-radius:8px;border:2px solid var(--red);background:transparent;color:var(--red);font-family:'Bebas Neue',sans-serif;font-size:.85rem;letter-spacing:1.5px;cursor:pointer;transition:all .2s;}
-  .btn-stop:hover{background:var(--red);color:#fff;}
-  @media(max-width:500px){.chrono-display{font-size:3.2rem;}.btn-plot{width:120px;height:120px;}.info-grid{grid-template-columns:1fr 1fr;}}
-  /* ── SPLIT-SCREEN MODE 4 ── */
-  .split-screen{display:flex;gap:8px;flex:1;}
-  .binome-col{flex:1;display:flex;flex-direction:column;gap:5px;border:2px solid var(--border);border-radius:var(--radius);padding:8px;background:var(--surface);min-width:0;overflow:hidden;}
-  .binome-col.col-a{border-color:var(--accent);}
-  .binome-col.col-b{border-color:var(--green);}
-  .col-header{font-family:'Bebas Neue',sans-serif;font-size:.85rem;letter-spacing:2px;text-align:center;padding:3px 0 5px;border-bottom:1px solid var(--border);margin-bottom:4px;}
-  .col-header.col-a{color:var(--accent);}
-  .col-header.col-b{color:var(--green);}
-  .col-runner-name{font-family:'Bebas Neue',sans-serif;font-size:1.05rem;letter-spacing:1px;color:var(--accent);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .col-observer-row{font-size:.65rem;color:var(--muted);text-align:center;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .col-series-pills{display:flex;flex-wrap:wrap;gap:3px;justify-content:center;margin:3px 0;}
-  .col-speed-info{display:grid;grid-template-columns:1fr 1fr 1fr;gap:3px;margin:3px 0;}
-  .col-speed-box{background:var(--surface2);border-radius:5px;padding:3px 4px;text-align:center;border:1px solid var(--border);}
-  .col-speed-box .v{font-family:'Bebas Neue',sans-serif;font-size:.95rem;letter-spacing:1px;display:block;}
-  .col-speed-box .l{font-size:.55rem;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);}
-  .col-feedback{text-align:center;font-family:'Bebas Neue',sans-serif;font-size:.75rem;letter-spacing:1.5px;padding:3px;border-radius:5px;transition:all .3s;}
-  .col-feedback.ok{background:rgba(0,255,136,.15);color:var(--green);border:1px solid var(--green);}
-  .col-feedback.fast{background:rgba(255,45,85,.15);color:var(--red);border:1px solid var(--red);}
-  .col-feedback.slow{background:rgba(255,215,0,.15);color:var(--yellow);border:1px solid var(--yellow);}
-  .col-feedback.hidden{opacity:0;}
-  .col-plot-wrap{display:flex;justify-content:center;margin:4px 0;}
-  .btn-col-plot{width:72px;height:72px;border-radius:50%;border:3px solid var(--accent);background:var(--surface2);color:var(--accent);font-family:'Bebas Neue',sans-serif;font-size:.8rem;letter-spacing:1px;cursor:pointer;transition:all .15s;user-select:none;display:flex;align-items:center;justify-content:center;}
-  .btn-col-plot:active{transform:scale(.9);background:rgba(74,140,255,.1);}
-  .btn-col-plot.disabled{opacity:.3;pointer-events:none;}
-  .col-actions{display:flex;gap:4px;justify-content:center;flex-wrap:wrap;}
-  .btn-col-marche{padding:4px 8px;border-radius:5px;border:1px solid var(--red);background:transparent;color:var(--red);font-family:'Bebas Neue',sans-serif;font-size:.7rem;letter-spacing:1px;cursor:pointer;transition:all .2s;}
-  .btn-col-marche.active{background:var(--red);color:#fff;}
-  .btn-col-stop{padding:4px 8px;border-radius:5px;border:1px solid var(--muted);background:transparent;color:var(--muted);font-family:'Bebas Neue',sans-serif;font-size:.7rem;letter-spacing:1px;cursor:pointer;transition:all .2s;}
-  .btn-col-stop:hover:not(:disabled){border-color:var(--red);color:var(--red);}
-  .btn-col-stop:disabled{opacity:.4;cursor:not-allowed;}
-  .col-dispensed-info{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;flex:1;padding:10px 0;}
-  /* Global chrono bar */
-  .split-chrono-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:10px 16px;margin-bottom:8px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
-  .split-chrono{font-family:'Bebas Neue',sans-serif;font-size:2.8rem;letter-spacing:4px;color:var(--accent);line-height:1;min-width:90px;}
-  .split-serie-info{font-size:.75rem;color:var(--muted);flex:1;}
-  .split-bar-wrap{flex:2;min-width:80px;height:6px;background:var(--surface2);border-radius:3px;overflow:hidden;}
-  .split-bar{height:100%;background:var(--accent);transition:width .5s linear,background .3s;border-radius:3px;}
-  .split-next-btn{background:var(--green);color:var(--bg);border:none;border-radius:8px;padding:8px 16px;font-family:'Bebas Neue',sans-serif;font-size:.9rem;letter-spacing:2px;cursor:pointer;display:none;}
-  /* Screen 2b */
-  .binome-setup-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:14px;}
-  .binome-setup-card h2{font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:2px;color:var(--accent);margin-bottom:12px;}
-  .role-choice{display:flex;gap:0;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);margin-top:8px;}
-  .role-opt{flex:1;padding:12px 8px;text-align:center;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.85rem;background:var(--surface2);color:var(--muted);border:none;transition:all .2s;}
-  .role-opt.active{background:var(--accent);color:var(--bg);font-weight:700;}
-  @media(max-width:480px){.split-chrono{font-size:2rem;}.btn-col-plot{width:60px;height:60px;font-size:.7rem;}}
-  /* Mode 4 full width */
-  .screen.mode4{max-width:100%;padding:8px 4px;}
-  /* Mini passage table in split columns */
-  .col-table-wrap{overflow-x:auto;overflow-y:auto;max-height:90px;margin-top:4px;border-top:1px solid var(--border);}
-  table.col-pass{border-collapse:collapse;width:100%;font-family:'DM Mono',monospace;font-size:.6rem;}
-  table.col-pass th{background:var(--surface2);color:var(--muted);padding:2px 4px;text-align:center;border:1px solid var(--border);}
-  table.col-pass td{padding:2px 4px;text-align:center;border:1px solid var(--border);min-width:22px;}
-  table.col-pass td.colx{color:var(--accent);font-weight:700;}
-  table.col-pass td.colm{background:rgba(255,45,85,.3);color:var(--red);}
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;700&display=swap');
+:root{--bg:#050d1f;--surface:#0a1628;--surface2:#112244;--border:#1a3060;--accent:#4a8cff;--green:#00ff88;--red:#ff2d55;--yellow:#ffd700;--orange:#ff9500;--text:#e8eaf0;--muted:#5a7090;--radius:12px;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;overflow-x:hidden;}
+header{display:flex;align-items:center;gap:12px;padding:14px 20px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;}
+header h1{font-family:'Bebas Neue',sans-serif;font-size:1.6rem;letter-spacing:3px;color:var(--accent);}
+.step-indicator{display:flex;gap:6px;margin-left:auto;}
+.step-dot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:.85rem;background:var(--surface2);border:2px solid var(--border);color:var(--muted);transition:all .3s;}
+.step-dot.active{border-color:var(--accent);color:var(--accent);}
+.step-dot.done{background:var(--accent);border-color:var(--accent);color:var(--bg);}
+.screen{display:none;padding:20px;max-width:960px;margin:0 auto;}
+.screen.active{display:block;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:16px;}
+.card h2{font-family:'Bebas Neue',sans-serif;font-size:1.3rem;letter-spacing:2px;color:var(--accent);margin-bottom:14px;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.form-grid.three{grid-template-columns:1fr 1fr 1fr;}
+@media(max-width:600px){.form-grid,.form-grid.three{grid-template-columns:1fr;}}
+.field{display:flex;flex-direction:column;gap:5px;}
+label{font-size:.7rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);}
+input,select{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:'DM Mono',monospace;font-size:.9rem;width:100%;transition:border-color .2s;}
+input:focus,select:focus{outline:none;border-color:var(--accent);}
+.series-row{display:flex;align-items:center;gap:10px;background:var(--surface2);border-radius:8px;padding:8px 12px;margin-bottom:6px;}
+.series-label{font-family:'Bebas Neue',sans-serif;font-size:1rem;color:var(--accent);min-width:60px;}
+.btn{padding:10px 22px;border-radius:8px;border:none;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:2px;transition:all .2s;display:inline-flex;align-items:center;gap:6px;}
+.btn-primary{background:var(--accent);color:var(--bg);}
+.btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border);}
+.btn-danger{background:var(--red);color:#fff;}
+.btn-success{background:var(--green);color:var(--bg);}
+.btn-warning{background:var(--yellow);color:var(--bg);}
+.btn-orange{background:var(--orange);color:var(--bg);}
+.actions{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;}
+.runner-tabs{display:flex;gap:0;margin-bottom:16px;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);}
+.runner-tab{flex:1;padding:10px 6px;text-align:center;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:.85rem;letter-spacing:1px;background:var(--surface2);color:var(--muted);border:none;transition:all .2s;}
+.runner-tab.active{background:var(--accent);color:var(--bg);}
+hr{border:none;border-top:1px solid var(--border);margin:14px 0;}
+.tag{display:inline-block;padding:2px 8px;border-radius:16px;font-size:.65rem;font-weight:700;letter-spacing:1px;}
+.tag-green{background:rgba(0,255,136,.15);color:var(--green);}
+.tag-red{background:rgba(255,45,85,.15);color:var(--red);}
+.tag-orange{background:rgba(255,149,0,.15);color:var(--orange);}
+/* Toggle dispensé */
+.toggle-wrap{display:flex;align-items:center;gap:10px;padding:10px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);margin-bottom:14px;}
+.toggle-wrap.on{border-color:var(--orange);background:rgba(255,149,0,.08);}
+.toggle{position:relative;width:44px;height:24px;background:var(--border);border-radius:12px;cursor:pointer;transition:background .2s;flex-shrink:0;}
+.toggle.on{background:var(--orange);}
+.toggle::after{content:'';position:absolute;top:2px;left:2px;width:20px;height:20px;background:#fff;border-radius:50%;transition:transform .2s;}
+.toggle.on::after{transform:translateX(20px);}
+/* Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;z-index:999;opacity:0;pointer-events:none;transition:opacity .2s;}
+.modal-overlay.open{opacity:1;pointer-events:all;}
+.modal-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:28px;max-width:500px;width:92%;text-align:center;}
+.modal-box h2{font-family:'Bebas Neue',sans-serif;font-size:1.3rem;letter-spacing:2px;color:var(--accent);margin-bottom:10px;}
+.modal-box p{color:var(--muted);margin-bottom:20px;font-size:.85rem;}
+.modal-btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}
+.modal-btn{flex:1;min-width:80px;padding:12px;border-radius:8px;border:1px solid var(--border);cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:.95rem;letter-spacing:2px;background:var(--surface2);color:var(--text);transition:all .2s;}
+.modal-btn:hover{border-color:var(--accent);color:var(--accent);}
+/* ═══ SPLIT SCREEN COURSE ═══ */
+.course-split{display:grid;grid-template-columns:1fr 1fr;gap:4px;min-height:calc(100vh - 120px);}
+.course-split .lane{background:var(--surface);border:2px solid var(--border);border-radius:10px;padding:12px;display:flex;flex-direction:column;position:relative;overflow:hidden;}
+.course-split .lane.left{border-color:var(--accent);}
+.course-split .lane.right{border-color:var(--green);}
+.lane-header{text-align:center;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid var(--border);}
+.lane-runner{font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:2px;color:var(--accent);}
+.lane.right .lane-runner{color:var(--green);}
+.lane-observer{font-size:.65rem;color:var(--orange);margin-top:2px;}
+.lane-serie{font-size:.65rem;color:var(--muted);margin-top:2px;}
+.lane-chrono{font-family:'Bebas Neue',sans-serif;font-size:2.8rem;letter-spacing:3px;color:var(--accent);text-align:center;line-height:1;margin:6px 0;}
+.lane.right .lane-chrono{color:var(--green);}
+.lane-target{text-align:center;color:var(--muted);font-size:.7rem;font-family:'DM Mono',monospace;}
+.lane-bar{height:4px;background:var(--surface2);border-radius:2px;margin:6px 0;overflow:hidden;}
+.lane-bar-inner{height:100%;background:var(--accent);transition:width .5s linear;border-radius:2px;}
+.lane.right .lane-bar-inner{background:var(--green);}
+.lane-info{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:8px;}
+.lane-info-box{background:var(--surface2);border-radius:6px;padding:6px;text-align:center;border:1px solid var(--border);}
+.lane-info-box .v{font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:1px;}
+.lane-info-box .l{font-size:.5rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);}
+.lane-feedback{text-align:center;font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:2px;padding:6px;border-radius:6px;margin:4px 0;min-height:32px;}
+.lane-feedback.ok{background:rgba(0,255,136,.15);color:var(--green);}
+.lane-feedback.fast{background:rgba(255,45,85,.15);color:var(--red);}
+.lane-feedback.slow{background:rgba(255,215,0,.15);color:var(--yellow);}
+.lane-plot{width:100px;height:100px;border-radius:50%;border:3px solid var(--accent);background:var(--surface2);color:var(--accent);font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:2px;cursor:pointer;display:flex;align-items:center;justify-content:center;margin:8px auto;transition:all .15s;user-select:none;}
+.lane.right .lane-plot{border-color:var(--green);color:var(--green);}
+.lane-plot:active{transform:scale(.92);background:rgba(0,229,255,.15);}
+.lane.right .lane-plot:active{background:rgba(0,255,136,.15);}
+.lane-plot.off{opacity:.3;pointer-events:none;}
+.lane-btns{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:auto;padding-top:8px;}
+.lane-btn{padding:6px 12px;border-radius:6px;border:none;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:.75rem;letter-spacing:1px;transition:all .2s;}
+.lane-btn-marche{border:2px solid var(--red);background:transparent;color:var(--red);}
+.lane-btn-marche.active{background:var(--red);color:#fff;}
+.lane-btn-stop{background:var(--orange);color:var(--bg);}
+/* Global chrono bar for split mode */
+.global-chrono{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:10px 16px;margin-bottom:8px;display:flex;align-items:center;gap:16px;}
+.global-chrono-time{font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:3px;color:var(--accent);}
+.global-chrono-bar{flex:1;height:6px;background:var(--surface2);border-radius:3px;overflow:hidden;}
+.global-chrono-bar-inner{height:100%;background:var(--accent);transition:width .5s linear;border-radius:3px;}
+.global-btns{display:flex;gap:8px;align-items:center;}
+/* Single runner mode (2 élèves) */
+.course-single .chrono-display{font-family:'Bebas Neue',sans-serif;font-size:4.5rem;letter-spacing:5px;color:var(--accent);text-align:center;line-height:1;}
+.course-single .chrono-target{text-align:center;color:var(--muted);font-size:.8rem;margin-top:4px;font-family:'DM Mono',monospace;}
+.course-single .chrono-bar-wrap{height:6px;background:var(--surface2);border-radius:3px;margin:10px 0;overflow:hidden;}
+.course-single .chrono-bar{height:100%;background:var(--accent);transition:width .5s linear,background .3s;border-radius:3px;}
+.course-single .info-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;}
+.course-single .info-box{background:var(--surface2);border-radius:8px;padding:10px;text-align:center;border:1px solid var(--border);}
+.course-single .info-box .val{font-family:'Bebas Neue',sans-serif;font-size:1.5rem;letter-spacing:2px;}
+.course-single .info-box .lbl{font-size:.6rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);}
+.val.green{color:var(--green);}.val.red{color:var(--red);}.val.yellow{color:var(--yellow);}.val.accent{color:var(--accent);}
+.course-single .feedback-badge{text-align:center;font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:3px;padding:10px;border-radius:8px;margin:8px 0;transition:all .3s;}
+.course-single .feedback-badge.ok{background:rgba(0,255,136,.15);color:var(--green);border:1px solid var(--green);}
+.course-single .feedback-badge.fast{background:rgba(255,45,85,.15);color:var(--red);border:1px solid var(--red);}
+.course-single .feedback-badge.slow{background:rgba(255,215,0,.15);color:var(--yellow);border:1px solid var(--yellow);}
+.course-single .feedback-badge.hidden{opacity:0;}
+.course-single .btn-plot{width:140px;height:140px;border-radius:50%;border:4px solid var(--accent);background:var(--surface2);color:var(--accent);font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:2px;cursor:pointer;text-align:center;transition:all .15s;user-select:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;box-shadow:0 0 20px rgba(0,229,255,.1);margin:14px auto;}
+.course-single .btn-plot:active{transform:scale(.95);box-shadow:0 0 40px rgba(0,229,255,.4);}
+.course-single .btn-plot.off{opacity:.3;pointer-events:none;}
+.course-single .btn-marche{padding:8px 16px;border-radius:8px;border:2px solid var(--red);background:transparent;color:var(--red);font-family:'Bebas Neue',sans-serif;font-size:.9rem;letter-spacing:2px;cursor:pointer;}
+.course-single .btn-marche.active{background:var(--red);color:#fff;}
+.current-runner-badge{display:inline-flex;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--accent);border-radius:16px;padding:4px 12px;font-family:'Bebas Neue',sans-serif;font-size:.9rem;letter-spacing:2px;color:var(--accent);}
+.observer-badge{font-size:.7rem;color:var(--orange);margin-top:2px;}
+.dot-live{width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 1.2s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+/* Results */
+.result-block{background:var(--surface2);border-radius:8px;padding:14px;margin-bottom:10px;border-left:4px solid var(--accent);}
+.result-block.dispensed{border-left-color:var(--orange);}
+.result-block h3{font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:2px;margin-bottom:8px;color:var(--accent);}
+/* QR */
+.qr-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;}
+.qr-card{background:var(--surface2);border:2px solid var(--border);border-radius:var(--radius);padding:16px;text-align:center;}
+.qr-card h3{font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:2px;color:var(--accent);margin-bottom:4px;}
+.qr-wrap{background:#fff;border-radius:8px;padding:10px;display:inline-block;margin:8px 0;}
+.qr-status{border-radius:6px;padding:6px;margin-top:6px;font-size:.7rem;}
+.qr-status.ok{background:rgba(0,255,136,.1);color:var(--green);}
+.qr-status.warn{background:rgba(255,215,0,.1);color:var(--yellow);}
+.scanner-url{font-family:'DM Mono',monospace;font-size:.5rem;color:var(--muted);word-break:break-all;margin-top:6px;padding:4px;background:var(--bg);border-radius:4px;max-height:40px;overflow:auto;}
+@media(max-width:500px){.course-single .chrono-display{font-size:3.2rem;}.course-single .btn-plot{width:110px;height:110px;}.lane-chrono{font-size:2.2rem;}.lane-plot{width:80px;height:80px;font-size:.85rem;}}
 </style>
 </head>
 <body>
-
 <header>
-  <a class="btn-home" href="./index.html">← Accueil</a>
-  <div>
-    <div style="font-size:.6rem;letter-spacing:2px;color:var(--muted);text-transform:uppercase;">EPS — Course de Durée</div>
-    <h1>VMA Tracker</h1>
-  </div>
-  <div class="step-indicator">
-    <div class="step-dot active" id="dot1">1</div>
-    <div class="step-dot" id="dot2">2</div>
-    <div class="step-dot" id="dot3">3</div>
-    <div class="step-dot" id="dot4">4</div>
-    <div class="step-dot" id="dot5">QR</div>
-  </div>
+  <div><div style="font-size:.6rem;letter-spacing:2px;color:var(--muted);text-transform:uppercase;">EPS — Course de Durée</div><h1>VMA Tracker</h1></div>
+  <div class="step-indicator"><div class="step-dot active" id="dot1">1</div><div class="step-dot" id="dot2">2</div><div class="step-dot" id="dot3">3</div><div class="step-dot" id="dot4">4</div><div class="step-dot" id="dot5">QR</div></div>
 </header>
+<div class="modal-overlay" id="modal"><div class="modal-box" id="modalBox"></div></div>
 
-<!-- ════ SCREEN 1 : CONFIG ════ -->
+<!-- SCREEN 1 -->
 <div class="screen active" id="screen1">
   <div class="card">
-    <h2>⚙ Configuration de la Séance</h2>
+    <h2>⚙ Configuration</h2>
     <div class="form-grid three">
-      <div class="field"><label>Distance piste (m)</label><input type="number" id="distPiste" value="400" min="50" step="10"></div>
-      <div class="field"><label>Distance entre plots (m)</label><input type="number" id="distPlots" value="25" min="5" step="5"></div>
-      <div class="field"><label>Séance du jour</label><input type="text" id="nomSeance" placeholder="ex: Séance 3 — Aérobie"></div>
+      <div class="field"><label>Piste (m)</label><input type="number" id="distPiste" value="400" min="50" step="10"></div>
+      <div class="field"><label>Plots (m)</label><input type="number" id="distPlots" value="25" min="5" step="5"></div>
+      <div class="field"><label>Élèves / tablette</label><select id="nbRunners"><option value="2">2 (1 binôme)</option><option value="4">4 (2 binômes)</option></select></div>
     </div>
-    <div class="form-grid" style="margin-top:14px;">
-      <div class="field"><label>Classe</label><input type="text" id="nomClasse" placeholder="ex: 3ème A"></div>
-      <div class="field"><label>Date</label><input type="date" id="dateSeance"></div>
+    <div class="form-grid" style="margin-top:12px;">
+      <div class="field"><label>Séance</label><input type="text" id="nomSeance" placeholder="Séance 3 — Aérobie"></div>
+      <div class="field"><label>Classe</label><input type="text" id="nomClasse" placeholder="3ème A"></div>
     </div>
-  </div>
-  <div class="card">
-    <h2>👥 Nombre d'élèves par tablette</h2>
-    <div class="group-selector">
-      <button class="group-opt active" onclick="setGroupSize(2)" id="grp2">2 ÉLÈVES<br><span style="font-size:.6rem;letter-spacing:1px;color:inherit;opacity:.7;">1 binôme</span></button>
-      <button class="group-opt" onclick="setGroupSize(4)" id="grp4">4 ÉLÈVES<br><span style="font-size:.6rem;letter-spacing:1px;color:inherit;opacity:.7;">2 binômes</span></button>
-    </div>
+    <div class="field" style="margin-top:12px;max-width:200px;"><label>Date</label><input type="date" id="dateSeance"></div>
   </div>
   <div class="card">
     <h2>🏃 Séries</h2>
-    <p style="color:var(--muted);font-size:.8rem;margin-bottom:14px;">Chaque série doit être un multiple de 1min30.</p>
-    <div class="field" style="margin-bottom:14px;max-width:180px;"><label>Nombre de séries</label><input type="number" id="nbSeries" value="3" min="1" max="10" oninput="genSeries()"></div>
+    <p style="color:var(--muted);font-size:.8rem;margin-bottom:12px;">Multiple de 1min30</p>
+    <div class="field" style="margin-bottom:12px;max-width:160px;"><label>Nb séries</label><input type="number" id="nbSeries" value="3" min="1" max="10" oninput="genSeries()"></div>
     <div id="seriesInputs"></div>
     <div class="actions"><button class="btn btn-secondary" onclick="genSeries()">↺ Actualiser</button><button class="btn btn-primary" onclick="goStep2()">Suivant →</button></div>
   </div>
 </div>
 
-<!-- ════ SCREEN 2 : PROFILS ════ -->
+<!-- SCREEN 2 -->
 <div class="screen" id="screen2">
   <div class="runner-tabs" id="runnerTabs"></div>
   <div id="runnerSetups"></div>
   <div class="actions"><button class="btn btn-secondary" onclick="goStep(0)">← Retour</button><button class="btn btn-primary" onclick="goStep3()">Suivant →</button></div>
 </div>
 
-<!-- ════ SCREEN 2b : QUI COURT EN PREMIER (mode 4 seulement) ════ -->
-<div class="screen" id="screen2b">
-  <div id="firstRunnerContent"></div>
-  <div class="actions">
-    <button class="btn btn-secondary" onclick="goStep(1)">← Retour</button>
-    <button class="btn btn-primary" onclick="goStep3b()">Lancer la séance →</button>
-  </div>
+<!-- SCREEN 3 -->
+<div class="screen" id="screen3"><div id="courseContainer"></div>
+  <div class="actions" style="margin-top:12px;"><button class="btn btn-success" onclick="goStep4()">✓ Terminer la séance</button></div>
 </div>
 
-<!-- ════ SCREEN 3 : COURSE ════ -->
-<div class="screen" id="screen3">
-  <div class="runner-tabs" id="courseTabs" style="margin-bottom:14px;"></div>
-  <div id="coursePanels"></div>
-  <div class="actions"><button class="btn btn-success" onclick="goStep4()">✓ Terminer la séance</button></div>
-</div>
-
-<!-- ════ SCREEN 4 : RÉSULTATS ════ -->
+<!-- SCREEN 4 -->
 <div class="screen" id="screen4">
-  <div class="card"><h2>📊 Bilan de Séance</h2><div id="resultsContent"></div></div>
-  <div class="actions">
-    <button class="btn btn-primary" onclick="exportCSV()">⬇ CSV</button>
-    <button class="btn btn-success" onclick="goStep5()">📱 QR Codes →</button>
-    <button class="btn btn-secondary" onclick="location.reload()">↺ Nouvelle séance</button>
-  </div>
+  <div class="card"><h2>📊 Bilan</h2><div id="resultsContent"></div></div>
+  <div class="actions"><button class="btn btn-primary" onclick="exportCSV()">⬇ CSV</button><button class="btn btn-success" onclick="goStep5()">📱 QR →</button><button class="btn btn-secondary" onclick="location.reload()">↺ Nouveau</button></div>
 </div>
 
-<!-- ════ SCREEN 5 : QR CODES ════ -->
+<!-- SCREEN 5 -->
 <div class="screen" id="screen5">
-  <div class="card">
-    <h2>📱 QR Codes — Transfert</h2>
-    <p style="color:var(--muted);font-size:.8rem;margin-bottom:18px;">Scannez chaque QR code depuis l'agrégateur prof.</p>
-    <div class="qr-grid" id="qrGrid"></div>
-  </div>
-  <div class="actions"><button class="btn btn-secondary" onclick="goStep(3)">← Résultats</button><button class="btn btn-secondary" onclick="location.reload()">↺ Nouvelle séance</button></div>
+  <div class="card"><h2>📱 QR Codes</h2><p style="color:var(--muted);font-size:.8rem;margin-bottom:16px;">Scannez depuis l'app Prof.</p><div class="qr-grid" id="qrGrid"></div></div>
+  <div class="actions"><button class="btn btn-secondary" onclick="goStep(3)">← Retour</button><button class="btn btn-secondary" onclick="location.reload()">↺ Nouveau</button></div>
 </div>
-<script>
-const AGGREGATOR_BASE_URL='https://epsapp.github.io/htmltopwa-claude/agregateur-vma.html';
 
-// ════════════════════════════════════════════════════════
-//  STATE
-// ════════════════════════════════════════════════════════
-const S={
-  groupSize:2, // 2 ou 4
-  distPiste:400,distPlots:25,nomSeance:'',nomClasse:'',dateSeance:'',
-  series:[], // [{dureeMs,nbCols}]
-  runners:[], // [{name,vma,projets:[],dispensed:false}] — 2 ou 4
-  // Course state per runner
-  data:[], // [runner_idx] -> [{passages:[],marcheIndices:[],colStarts:[],stopped:false,stoppedAt:0}] per serie
-  // Active chrono per runner
-  chrono:[], // [{interval,start,elapsed,running,finished,colCount,plotCount,marcheNext}]
-  activePanel:0
+<script>
+const AGG_URL='https://epsapp.github.io/htmltopwa-claude/agregateur-vma.html';
+const S={distPiste:400,distPlots:25,nomSeance:'',nomClasse:'',dateSeance:'',nbRunners:2,series:[],runners:[],data:[],
+  chrono:{interval:null,start:null,elapsed:0,running:false,finished:false,serieIdx:0},
+  // Per-lane state for split mode
+  lanes:[{plotCount:0,colCount:0,marcheNext:false},{plotCount:0,colCount:0,marcheNext:false}]
 };
 
-function msToDurStr(ms){const t=Math.floor(ms/1000),m=Math.floor(t/60),s=t%60;return String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');}
+function ms2s(ms){const t=Math.floor(ms/1000),m=Math.floor(t/60),s=t%60;return String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');}
+function goStep(n){document.querySelectorAll('.screen').forEach(e=>e.classList.remove('active'));document.getElementById('screen'+(n+1)).classList.add('active');document.querySelectorAll('.step-dot').forEach((d,i)=>{d.classList.toggle('active',i===n);d.classList.toggle('done',i<n);});window.scrollTo(0,0);}
 
-// ════════════════════════════════════════════════════════
-//  NAVIGATION
-// ════════════════════════════════════════════════════════
-function goStep(n){
-  document.querySelectorAll('.screen').forEach(e=>e.classList.remove('active'));
-  document.getElementById('screen'+(n+1)).classList.add('active');
-  document.querySelectorAll('.step-dot').forEach((d,i)=>{d.classList.toggle('active',i===n);d.classList.toggle('done',i<n);});
-  window.scrollTo(0,0);
-}
-function showScreen(id){
-  document.querySelectorAll('.screen').forEach(e=>e.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-  window.scrollTo(0,0);
-}
+// ══════ STEP 1 ══════
+function genSeries(){const nb=parseInt(document.getElementById('nbSeries').value)||3;const w=document.getElementById('seriesInputs');w.innerHTML='';for(let i=0;i<nb;i++){const p=S.series[i];const dm=p?Math.floor(p.dureeMs/60000):(i+1)*3;const ds=p?Math.floor((p.dureeMs%60000)/1000):0;const r=document.createElement('div');r.className='series-row';r.innerHTML='<span class="series-label">S'+(i+1)+'</span><div class="field" style="flex:1"><label>Min</label><input type="number" id="sm'+i+'" value="'+dm+'" min="1"></div><div class="field" style="flex:1"><label>Sec</label><select id="ss'+i+'"><option value="0"'+(ds===0?' selected':'')+'>00</option><option value="30"'+(ds===30?' selected':'')+'>30</option></select></div><div style="font-size:.65rem;color:var(--muted);min-width:60px;" id="si'+i+'"></div>';w.appendChild(r);document.getElementById('sm'+i).oninput=()=>updSI(i);document.getElementById('ss'+i).onchange=()=>updSI(i);updSI(i);}}
+function updSI(i){const m=document.getElementById('sm'+i),s=document.getElementById('ss'+i);if(!m||!s)return;const ms=(parseInt(m.value)||0)*60000+(parseInt(s.value)||0)*1000;const c=ms/90000;document.getElementById('si'+i).textContent=(ms>0&&Number.isInteger(c))?c+' col':'⚠';}
 
-// ════════════════════════════════════════════════════════
-//  STEP 1: CONFIG
-// ════════════════════════════════════════════════════════
-function setGroupSize(n){
-  S.groupSize=n;
-  document.getElementById('grp2').classList.toggle('active',n===2);
-  document.getElementById('grp4').classList.toggle('active',n===4);
-}
+function goStep2(){const nb=parseInt(document.getElementById('nbSeries').value)||3;const ser=[];for(let i=0;i<nb;i++){const m=document.getElementById('sm'+i),s=document.getElementById('ss'+i);if(!m||!s){alert("Cliquez Actualiser");return;}const ms=(parseInt(m.value)||0)*60000+(parseInt(s.value)||0)*1000;if(ms<=0||ms%90000!==0){alert('Série '+(i+1)+' invalide');return;}ser.push({dureeMs:ms,nbCols:ms/90000});}
+S.series=ser;S.distPiste=parseInt(document.getElementById('distPiste').value)||400;S.distPlots=parseInt(document.getElementById('distPlots').value)||25;S.nbRunners=parseInt(document.getElementById('nbRunners').value)||2;S.nomSeance=document.getElementById('nomSeance').value||'Séance';S.nomClasse=document.getElementById('nomClasse').value||'';S.dateSeance=document.getElementById('dateSeance').value||new Date().toISOString().slice(0,10);
+while(S.runners.length<S.nbRunners)S.runners.push({name:'',vma:12,projets:[],dispensed:false,observes:null});S.runners.length=S.nbRunners;
+S.data=[];for(let r=0;r<S.nbRunners;r++){S.data.push([]);for(let i=0;i<nb;i++)S.data[r].push({passages:[],marcheIndices:[],colStarts:[],stoppedEarly:false,stoppedAtMs:0});}
+buildProfiles();goStep(1);}
 
-function genSeries(){
-  const nb=parseInt(document.getElementById('nbSeries').value)||3;
-  const wrap=document.getElementById('seriesInputs');wrap.innerHTML='';
-  for(let i=0;i<nb;i++){
-    const prev=S.series[i];
-    const defMin=prev?Math.floor(prev.dureeMs/60000):(i+1)*3;
-    const defSec=prev?Math.floor((prev.dureeMs%60000)/1000):0;
-    const row=document.createElement('div');row.className='series-row';
-    row.innerHTML='<span class="series-label">SÉRIE '+(i+1)+'</span><div class="field" style="flex:1"><label>Minutes</label><input type="number" id="sm'+i+'" value="'+defMin+'" min="1" step="1"></div><div class="field" style="flex:1"><label>Secondes</label><select id="ss'+i+'"><option value="0" '+(defSec===0?'selected':'')+'>00</option><option value="30" '+(defSec===30?'selected':'')+'>30</option></select></div><div style="font-size:.65rem;color:var(--muted);min-width:70px;" id="sinfo'+i+'"></div>';
-    wrap.appendChild(row);
-    document.getElementById('sm'+i).addEventListener('input',function(){updateSerieInfo(i);});
-    document.getElementById('ss'+i).addEventListener('change',function(){updateSerieInfo(i);});
-    updateSerieInfo(i);
-  }
-}
+// ══════ STEP 2 ══════
+function buildProfiles(){const tw=document.getElementById('runnerTabs'),sw=document.getElementById('runnerSetups');tw.innerHTML='';sw.innerHTML='';
+for(let r=0;r<S.nbRunners;r++){const t=document.createElement('button');t.className='runner-tab'+(r===0?' active':'');t.id='tab'+r;t.textContent='Élève '+(r+1);t.onclick=()=>showR(r);tw.appendChild(t);
+const p=document.createElement('div');p.id='rSetup'+r;p.style.display=r===0?'':'none';const pr=S.runners[r];
+p.innerHTML='<div class="card"><h2>Élève '+(r+1)+'</h2><div class="toggle-wrap'+(pr.dispensed?' on':'')+'" id="tw'+r+'"><div class="toggle'+(pr.dispensed?' on':'')+'" id="td'+r+'" onclick="togDisp('+r+')"></div><span id="tl'+r+'">'+(pr.dispensed?'🩹 Dispensé':'Coureur')+'</span></div><div class="form-grid"><div class="field"><label>Nom</label><input type="text" id="rn'+r+'" value="'+(pr.name||'')+'"></div><div id="vf'+r+'"'+(pr.dispensed?' style="display:none"':'')+'><div class="field"><label>VMA</label><input type="number" id="rv'+r+'" value="'+(pr.vma||12)+'" step="0.5" min="6" max="25"></div></div></div><div id="of'+r+'"'+(pr.dispensed?'':' style="display:none"')+'><div class="field" style="margin-top:10px"><label>Observe</label><select id="ro'+r+'"></select></div></div></div><div id="pw'+r+'"'+(pr.dispensed?' style="display:none"':'')+'><div class="card"><h2>Vitesses cibles</h2><div id="rp'+r+'"></div></div></div>';
+sw.appendChild(p);}
+for(let r=0;r<S.nbRunners;r++){buildProj(r);buildObsSel(r);}}
 
-function updateSerieInfo(i){
-  var mEl=document.getElementById('sm'+i),sEl=document.getElementById('ss'+i);
-  if(!mEl||!sEl)return;
-  var ms=(parseInt(mEl.value)||0)*60000+(parseInt(sEl.value)||0)*1000;
-  var cols=ms/90000;var el=document.getElementById('sinfo'+i);
-  if(el)el.textContent=(ms>0&&Number.isInteger(cols))?cols+' col.':'⚠ non multiple';
-}
+function togDisp(r){S.runners[r].dispensed=!S.runners[r].dispensed;const on=S.runners[r].dispensed;document.getElementById('td'+r).classList.toggle('on',on);document.getElementById('tw'+r).classList.toggle('on',on);document.getElementById('tl'+r).textContent=on?'🩹 Dispensé':'Coureur';document.getElementById('vf'+r).style.display=on?'none':'';document.getElementById('of'+r).style.display=on?'':'none';document.getElementById('pw'+r).style.display=on?'none':'';for(let i=0;i<S.nbRunners;i++)buildObsSel(i);}
+function buildObsSel(r){const s=document.getElementById('ro'+r);if(!s)return;s.innerHTML='<option value="">—</option>';for(let i=0;i<S.nbRunners;i++){if(i===r||S.runners[i].dispensed)continue;const n=document.getElementById('rn'+i)?.value||'Élève '+(i+1);s.innerHTML+='<option value="'+i+'"'+(S.runners[r].observes===i?' selected':'')+'>'+n+'</option>';}}
+function buildProj(r){const w=document.getElementById('rp'+r);if(!w)return;w.innerHTML='';S.series.forEach((s,i)=>{const pv=S.runners[r].projets?.[i]||'';const d=document.createElement('div');d.className='series-row';d.innerHTML='<span class="series-label">S'+(i+1)+'</span><span style="color:var(--muted);font-size:.75rem;min-width:50px">'+ms2s(s.dureeMs)+'</span><div class="field" style="flex:1"><label>km/h</label><input type="number" id="rp'+r+'s'+i+'" value="'+pv+'" step="0.1" min="4" max="30"></div>';w.appendChild(d);});}
+function showR(r){for(let i=0;i<S.nbRunners;i++){document.getElementById('rSetup'+i).style.display=i===r?'':'none';document.getElementById('tab'+i).classList.toggle('active',i===r);}}
 
-function goStep2(){
-  var nb=parseInt(document.getElementById('nbSeries').value)||3;
-  var series=[];
-  for(var i=0;i<nb;i++){
-    var mEl=document.getElementById('sm'+i),sEl=document.getElementById('ss'+i);
-    if(!mEl||!sEl){alert("Cliquez sur Actualiser");return;}
-    var ms=(parseInt(mEl.value)||0)*60000+(parseInt(sEl.value)||0)*1000;
-    if(ms<=0){alert('Série '+(i+1)+' : durée invalide');return;}
-    if(ms%90000!==0){alert('Série '+(i+1)+' : multiple de 1min30 requis');return;}
-    series.push({dureeMs:ms,nbCols:ms/90000});
-  }
-  S.series=series;
-  S.distPiste=parseInt(document.getElementById('distPiste').value)||400;
-  S.distPlots=parseInt(document.getElementById('distPlots').value)||25;
-  S.nomSeance=document.getElementById('nomSeance').value||'Séance';
-  S.nomClasse=document.getElementById('nomClasse').value||'';
-  S.dateSeance=document.getElementById('dateSeance').value||new Date().toISOString().slice(0,10);
-  // Init runners
-  while(S.runners.length<S.groupSize) S.runners.push({name:'',vma:12,projets:[],dispensed:false});
-  S.runners.length=S.groupSize;
-  // Init data
-  S.data=[];S.chrono=[];
-  for(var r=0;r<S.groupSize;r++){
-    S.data.push([]);
-    for(var si=0;si<nb;si++) S.data[r].push({passages:[],marcheIndices:[],colStarts:[],stopped:false,stoppedAt:0});
-    S.chrono.push({interval:null,start:null,elapsed:0,running:false,finished:false,colCount:0,plotCount:0,marcheNext:false,currentSerie:0});
-  }
-  buildStep2();goStep(1);
-}
+function goStep3(){for(let r=0;r<S.nbRunners;r++){const n=document.getElementById('rn'+r).value.trim();if(!n){alert('Élève '+(r+1)+': nom manquant');showR(r);return;}S.runners[r].name=n;
+if(S.runners[r].dispensed){const o=document.getElementById('ro'+r).value;if(o===''){alert(n+': pas de coureur assigné');showR(r);return;}S.runners[r].observes=parseInt(o);S.runners[r].vma=0;S.runners[r].projets=[];}
+else{const v=parseFloat(document.getElementById('rv'+r).value);if(!v||v<=0){alert(n+': VMA invalide');showR(r);return;}S.runners[r].vma=v;const pj=[];for(let i=0;i<S.series.length;i++){const x=parseFloat(document.getElementById('rp'+r+'s'+i).value);if(!x||x<=0){alert(n+': cible S'+(i+1)+' manquante');showR(r);return;}pj.push(x);}S.runners[r].projets=pj;}
+document.getElementById('tab'+r).textContent=(S.runners[r].dispensed?'🩹 ':'')+ S.runners[r].name;}
+openStartModal();}
 
-// ════════════════════════════════════════════════════════
-//  STEP 2: PROFILS
-// ════════════════════════════════════════════════════════
-function buildStep2(){
-  var tabs=document.getElementById('runnerTabs');tabs.innerHTML='';
-  var setups=document.getElementById('runnerSetups');setups.innerHTML='';
-  for(var r=0;r<S.groupSize;r++){
-    // Tab
-    var tab=document.createElement('button');
-    tab.className='runner-tab'+(r===0?' active':'');
-    tab.id='tab'+r;
-    tab.textContent='👤 Élève '+(r+1);
-    tab.setAttribute('onclick','showRunnerSetup('+r+')');
-    tabs.appendChild(tab);
-    // Setup div
-    var binome=r<2?'Binôme 1':'Binôme 2';
-    var partner=r%2===0?r+1:r-1;
-    var div=document.createElement('div');
-    div.className='runner-setup';div.id='setup'+r;
-    div.style.display=r===0?'block':'none';
-    var prev=S.runners[r];
-    div.innerHTML='<div class="card"><h2>Élève '+(r+1)+' <span style="font-size:.7rem;color:var(--muted);letter-spacing:1px;">'+binome+'</span></h2>'
-      +'<div class="form-grid"><div class="field"><label>Prénom / Nom</label><input type="text" id="r'+r+'name" value="'+(prev.name||'')+'" placeholder="Prénom Nom"></div>'
-      +'<div class="field" id="vmaField'+r+'"><label>VMA (km/h)</label><input type="number" id="r'+r+'vma" value="'+(prev.vma||12)+'" step="0.5" min="6" max="25" oninput="refreshAllVmaPct('+r+')"></div></div>'
-      +'<div class="check-row" onclick="toggleDispensed('+r+')"><input type="checkbox" id="r'+r+'disp" '+(prev.dispensed?'checked':'')+'><div><label>Dispensé(e) — observateur uniquement</label><div class="check-info">Ne court pas. Observe l\'élève '+(partner+1)+' de son binôme.</div></div></div>'
-      +'</div>'
-      +'<div class="card" id="projCard'+r+'"'+(prev.dispensed?' style="display:none"':'')+'><h2>Projets de vitesse</h2>'
-      +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;align-items:center;">'
-      +'<span style="font-size:.75rem;color:var(--muted);">Pré-remplir&nbsp;:</span>'
-      +'<button type="button" onclick="fillProjets('+r+',8)" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:3px 10px;font-size:.78rem;cursor:pointer;">8</button>'
-      +'<button type="button" onclick="fillProjets('+r+',10)" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:3px 10px;font-size:.78rem;cursor:pointer;">10</button>'
-      +'<button type="button" onclick="fillProjets('+r+',12)" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:3px 10px;font-size:.78rem;cursor:pointer;">12</button>'
-      +'<button type="button" onclick="fillProjets('+r+',14)" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:3px 10px;font-size:.78rem;cursor:pointer;">14</button>'
-      +'</div>'
-      +'<div id="r'+r+'proj"></div></div>';
-    setups.appendChild(div);
-  }
-  // Build speed projets for each non-dispensed
-  for(var r=0;r<S.groupSize;r++) buildProjInputs(r);
-}
+function openStartModal(){const m=document.getElementById('modal'),b=document.getElementById('modalBox');
+const active=S.runners.map((r,i)=>({...r,i})).filter(r=>!r.dispensed);if(!active.length){alert('Aucun coureur !');return;}
+if(S.nbRunners===4){
+  // Mode 4: on demande qui court en premier dans chaque binôme
+  // Binôme A = runners 0,1 — Binôme B = runners 2,3
+  const bA=S.runners.slice(0,2),bB=S.runners.slice(2,4);
+  const aActive=bA.filter(r=>!r.dispensed),bActive=bB.filter(r=>!r.dispensed);
+  let html='<h2>Qui court en premier ?</h2><p>Pour chaque binôme, choisissez le premier coureur.<br>L\'autre observera.</p>';
+  html+='<div style="margin-bottom:16px"><b style="color:var(--accent)">Binôme A</b><div class="modal-btns" style="margin-top:8px" id="startA">';
+  bA.forEach((r,i)=>{if(!r.dispensed)html+='<button class="modal-btn" data-idx="'+i+'" onclick="pickStart(0,'+i+',this)">'+r.name+'</button>';else html+='<div style="color:var(--orange);font-size:.8rem;padding:8px;">🩹 '+r.name+' (dispensé)</div>';});
+  html+='</div></div>';
+  html+='<div style="margin-bottom:16px"><b style="color:var(--green)">Binôme B</b><div class="modal-btns" style="margin-top:8px" id="startB">';
+  bB.forEach((r,i)=>{if(!r.dispensed)html+='<button class="modal-btn" data-idx="'+(i+2)+'" onclick="pickStart(1,'+(i+2)+',this)">'+r.name+'</button>';else html+='<div style="color:var(--orange);font-size:.8rem;padding:8px;">🩹 '+r.name+' (dispensé)</div>';});
+  html+='</div></div>';
+  html+='<button class="btn btn-primary" id="btnGoSplit" onclick="startSplit()" style="width:100%;margin-top:12px;" disabled>▶ DÉMARRER LA SÉANCE</button>';
+  b.innerHTML=html;
+  window._splitStarters=[null,null];
+  m.classList.add('open');
+} else {
+  // Mode 2: comme avant
+  b.innerHTML='<h2>Qui commence ?</h2><p>Premier coureur</p><div class="modal-btns">'+active.map(r=>'<button class="modal-btn" onclick="startSingle('+r.i+')">'+r.name+'</button>').join('')+'</div>';
+  m.classList.add('open');
+}}
 
-function showRunnerSetup(r){
-  document.querySelectorAll('.runner-setup').forEach(function(e){e.style.display='none';});
-  document.getElementById('setup'+r).style.display='block';
-  document.querySelectorAll('#runnerTabs .runner-tab').forEach(function(t,i){t.classList.toggle('active',i===r);});
-}
+window._splitStarters=[null,null];
+function pickStart(binome,idx,btn){window._splitStarters[binome]=idx;btn.parentElement.querySelectorAll('.modal-btn').forEach(b=>{b.style.borderColor=b===btn?'var(--accent)':'var(--border)';b.style.color=b===btn?'var(--accent)':'';});if(window._splitStarters[0]!==null&&window._splitStarters[1]!==null)document.getElementById('btnGoSplit').disabled=false;}
 
-function toggleDispensed(r){
-  var cb=document.getElementById('r'+r+'disp');
-  cb.checked=!cb.checked;
-  var proj=document.getElementById('projCard'+r);
-  var vma=document.getElementById('vmaField'+r);
-  proj.style.display=cb.checked?'none':'block';
-  vma.style.opacity=cb.checked?'.4':'1';
-}
+function startSingle(idx){document.getElementById('modal').classList.remove('open');S.chrono.serieIdx=0;buildSingleCourse(idx);goStep(2);}
+function startSplit(){document.getElementById('modal').classList.remove('open');S.chrono.serieIdx=0;buildSplitCourse(window._splitStarters[0],window._splitStarters[1]);goStep(2);}
 
-function fillProjets(r,speed){
-  S.series.forEach(function(_,i){
-    var inp=document.getElementById('r'+r+'p'+i);
-    if(inp){inp.value=speed;updateVmaPct(r,i);}
-  });
-}
+// ══════ STEP 3 — SINGLE MODE (2 élèves) ══════
+let _singleRunner=0;
+function buildSingleCourse(rIdx){_singleRunner=rIdx;const si=S.chrono.serieIdx;const r=S.runners[rIdx],serie=S.series[si];
+const obs=S.runners.find(x=>x.dispensed&&x.observes===rIdx);
+const c=document.getElementById('courseContainer');
+c.innerHTML='<div class="course-single"><div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px"><div><div class="current-runner-badge"><div class="dot-live"></div>'+r.name+' — S'+(si+1)+'</div>'+(obs?'<div class="observer-badge">👁 '+obs.name+'</div>':'')+'<div style="color:var(--muted);font-size:.75rem;">'+ms2s(serie.dureeMs)+' · Cible '+r.projets[si]+' km/h</div></div><button class="btn btn-secondary" style="font-size:.85rem" onclick="switchSingle()">↔ Changer</button></div><div class="card"><div class="chrono-display" id="sChronoD">00:00</div><div class="chrono-target">Obj: '+ms2s(serie.dureeMs)+'</div><div class="chrono-bar-wrap"><div class="chrono-bar" id="sBar" style="width:0%"></div></div><div class="info-grid"><div class="info-box"><div class="val accent" id="sVm">—</div><div class="lbl">Vit moy</div></div><div class="info-box"><div class="val accent" id="sVc">'+r.projets[si]+'</div><div class="lbl">Cible</div></div><div class="info-box"><div class="val accent" id="sEc">—</div><div class="lbl">Écart</div></div></div><div class="feedback-badge hidden" id="sFb">—</div><div class="btn-plot off" id="sPlot" onclick="sClickPlot()">PLOT</div><div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap"><div class="btn-marche" id="sMarche" onclick="sTogMarche()">🚶 MARCHE</div><button class="btn btn-primary" id="sSS" onclick="sStartStop()">▶ DÉMARRER</button><button class="btn btn-orange" id="sStop" onclick="sStopEarly()" style="display:none">⏹ Arrêter</button><button class="btn btn-warning" id="sNext" onclick="sNextSerie()" style="display:none">→ Suivante</button></div></div></div>';
+S.chrono.running=false;S.chrono.finished=false;S.chrono.elapsed=0;S.lanes[0]={plotCount:0,colCount:0,marcheNext:false};}
 
-function buildProjInputs(r){
-  var wrap=document.getElementById('r'+r+'proj');if(!wrap)return;
-  wrap.innerHTML='';
-  S.series.forEach(function(serie,i){
-    var prev=S.runners[r].projets&&S.runners[r].projets[i]||'';
-    var row=document.createElement('div');row.className='series-row';
-    row.innerHTML='<span class="series-label">S'+(i+1)+'</span><div style="color:var(--muted);font-size:.75rem;min-width:70px;">'+msToDurStr(serie.dureeMs)+'</div><div class="field" style="flex:1"><label>Cible (km/h)</label><input type="number" id="r'+r+'p'+i+'" value="'+prev+'" step="0.1" min="4" max="30" placeholder="11.5"></div><div style="font-size:.65rem;color:var(--muted);min-width:55px;" id="r'+r+'ppct'+i+'"></div>';
-    wrap.appendChild(row);
-    document.getElementById('r'+r+'p'+i).addEventListener('input',function(){updateVmaPct(r,i);});
-    updateVmaPct(r,i);
-  });
-}
+function sStartStop(){const si=S.chrono.serieIdx,r=_singleRunner,serie=S.series[si],d=S.data[r][si];
+if(S.chrono.finished){document.getElementById('sNext').style.display='inline-flex';document.getElementById('sStop').style.display='none';return;}
+if(!S.chrono.running){S.chrono.running=true;S.chrono.start=Date.now()-S.chrono.elapsed;if(d.colStarts.length===0){d.colStarts.push(0);S.lanes[0].colCount=0;S.lanes[0].plotCount=0;}document.getElementById('sSS').textContent='⏸ PAUSE';document.getElementById('sSS').className='btn btn-danger';document.getElementById('sPlot').classList.remove('off');document.getElementById('sStop').style.display='inline-flex';
+S.chrono.interval=setInterval(()=>{S.chrono.elapsed=Date.now()-S.chrono.start;document.getElementById('sChronoD').textContent=ms2s(S.chrono.elapsed);const p=Math.min(S.chrono.elapsed/serie.dureeMs*100,100);const bar=document.getElementById('sBar');bar.style.width=p+'%';bar.style.background=p>95?'var(--red)':p>80?'var(--yellow)':'var(--accent)';const ce=S.chrono.elapsed-(d.colStarts[S.lanes[0].colCount]||0);if(ce>=90000&&S.lanes[0].colCount<serie.nbCols-1){S.lanes[0].colCount++;S.lanes[0].plotCount=0;d.colStarts.push(S.chrono.elapsed);}if(S.chrono.elapsed>=serie.dureeMs){clearInterval(S.chrono.interval);S.chrono.running=false;S.chrono.finished=true;document.getElementById('sSS').textContent='✓ FINI';document.getElementById('sSS').className='btn btn-success';document.getElementById('sPlot').classList.add('off');document.getElementById('sStop').style.display='none';}},100);
+}else{clearInterval(S.chrono.interval);S.chrono.running=false;document.getElementById('sSS').textContent='▶ REPRENDRE';document.getElementById('sSS').className='btn btn-primary';document.getElementById('sPlot').classList.add('off');}}
 
-function updateVmaPct(r,i){
-  var vma=parseFloat(document.getElementById('r'+r+'vma').value)||0;
-  var v=parseFloat(document.getElementById('r'+r+'p'+i).value)||0;
-  var el=document.getElementById('r'+r+'ppct'+i);
-  if(el)el.textContent=(vma>0&&v>0)?Math.round(v/vma*100)+'%':'';
-}
-function refreshAllVmaPct(r){S.series.forEach(function(_,i){updateVmaPct(r,i);});}
+function sClickPlot(){if(!S.chrono.running)return;const r=_singleRunner,si=S.chrono.serieIdx,d=S.data[r][si],L=S.lanes[0],now=S.chrono.elapsed;d.passages.push({t:now,col:L.colCount,isMarche:L.marcheNext});if(L.marcheNext)d.marcheIndices.push(d.passages.length-1);L.marcheNext=false;document.getElementById('sMarche').classList.remove('active');L.plotCount++;const cp=d.passages.filter(p=>p.col===L.colCount),cs=d.colStarts[L.colCount]||0,ce=now-cs,vc=S.runners[r].projets[si];if(ce>0&&cp.length>0){const vm=cp.length*S.distPlots/(ce/1000)*3.6,ec=vm-vc;document.getElementById('sVm').textContent=vm.toFixed(1);document.getElementById('sEc').textContent=(ec>=0?'+':'')+ec.toFixed(1);const fb=document.getElementById('sFb');if(Math.abs(ec)<=0.5){fb.className='feedback-badge ok';fb.textContent='✓ ZONE';document.getElementById('sEc').className='val green';}else if(ec>0.5){fb.className='feedback-badge fast';fb.textContent='⚡ RAPIDE';document.getElementById('sEc').className='val red';}else{fb.className='feedback-badge slow';fb.textContent='🐢 LENT';document.getElementById('sEc').className='val yellow';}}}
+function sTogMarche(){S.lanes[0].marcheNext=!S.lanes[0].marcheNext;document.getElementById('sMarche').classList.toggle('active',S.lanes[0].marcheNext);}
+function sStopEarly(){if(!confirm('Arrêter la série ?'))return;clearInterval(S.chrono.interval);S.chrono.running=false;S.chrono.finished=false;S.data[_singleRunner][S.chrono.serieIdx].stoppedEarly=true;S.data[_singleRunner][S.chrono.serieIdx].stoppedAtMs=S.chrono.elapsed;document.getElementById('sPlot').classList.add('off');document.getElementById('sStop').style.display='none';document.getElementById('sNext').style.display='inline-flex';document.getElementById('sSS').textContent='⏹';document.getElementById('sSS').disabled=true;}
+function sNextSerie(){document.getElementById('sSS').disabled=false;for(let i=S.chrono.serieIdx+1;i<S.series.length;i++){const d=S.data[_singleRunner][i];if(!d.passages.length&&!d.stoppedEarly){S.chrono.serieIdx=i;S.chrono.elapsed=0;buildSingleCourse(_singleRunner);return;}}alert('Séries terminées pour '+S.runners[_singleRunner].name);}
+function switchSingle(){if(S.chrono.running){alert("Pause d'abord");return;}const active=S.runners.map((r,i)=>({...r,i})).filter(r=>!r.dispensed);let next=_singleRunner;for(let a=0;a<S.nbRunners;a++){next=(next+1)%S.nbRunners;if(!S.runners[next].dispensed)break;}for(let i=0;i<S.series.length;i++){if(!S.data[next][i].passages.length&&!S.data[next][i].stoppedEarly){S.chrono.serieIdx=i;break;}}S.chrono.elapsed=0;buildSingleCourse(next);}
 
-function goStep3(){
-  // Validate all runners
-  for(var r=0;r<S.groupSize;r++){
-    var name=document.getElementById('r'+r+'name').value.trim();
-    var dispensed=document.getElementById('r'+r+'disp').checked;
-    if(!name){alert('Élève '+(r+1)+' : prénom manquant');showRunnerSetup(r);return;}
-    S.runners[r].name=name;
-    S.runners[r].dispensed=dispensed;
-    if(!dispensed){
-      var vma=parseFloat(document.getElementById('r'+r+'vma').value);
-      if(!vma||vma<=0){alert(name+' : VMA invalide');showRunnerSetup(r);return;}
-      S.runners[r].vma=vma;
-      var projets=[];
-      for(var i=0;i<S.series.length;i++){
-        var v=parseFloat(document.getElementById('r'+r+'p'+i).value);
-        if(!v||v<=0){alert(name+' : cible S'+(i+1)+' manquante');showRunnerSetup(r);return;}
-        projets.push(v);
-      }
-      S.runners[r].projets=projets;
-    }
-    // Update tab text
-    document.getElementById('tab'+r).textContent=(dispensed?'🩹 ':'👤 ')+name;
-    if(dispensed) document.getElementById('tab'+r).classList.add('dispensed');
-  }
-  if(S.groupSize===4){buildFirstRunnerUI();showScreen('screen2b');}
-  else{buildCourseUI();goStep(2);}
-}
+// ══════ STEP 3 — SPLIT MODE (4 élèves) ══════
+let _splitRunners=[0,2]; // indices of current runners in each lane
+function buildSplitCourse(rA,rB){_splitRunners=[rA,rB];const si=S.chrono.serieIdx;const c=document.getElementById('courseContainer');
+// Determine observers for each runner
+function getObs(ri){return S.runners.find(x=>x.dispensed&&x.observes===ri);}
+// Non-dispensed partner in same binome
+function getPartner(ri){const base=ri<2?0:2;const other=base+(ri===base?1:0);return S.runners[other]?.dispensed?null:other;}
 
-// ════════════════════════════════════════════════════════
-//  SCREEN 2b : QUI COURT EN PREMIER (mode 4)
-// ════════════════════════════════════════════════════════
-// G = état global split-screen
-var G={colRole:[0,2],globalInterval:null,globalElapsed:0,globalRunning:false,globalFinished:false,currentSerie:0,col:[{plotCount:0,marcheNext:false,stopped:false,stoppedAt:0,colCount:0},{plotCount:0,marcheNext:false,stopped:false,stoppedAt:0,colCount:0}]};
+const sA=S.series[si],rAr=S.runners[rA],rBr=S.runners[rB];
+const obsA=getObs(rA),obsB=getObs(rB);
+// The observer is the non-running partner (or dispensé)
+const partA=getPartner(rA),partB=getPartner(rB);
+const obsNameA=obsA?obsA.name:(partA!==null&&partA!==rA?S.runners[partA].name:'');
+const obsNameB=obsB?obsB.name:(partB!==null&&partB!==rB?S.runners[partB].name:'');
 
-function buildFirstRunnerUI(){
-  var html='';
-  for(var b=0;b<2;b++){
-    var r0=b*2,r1=b*2+1;
-    var n0=S.runners[r0].name,n1=S.runners[r1].name;
-    var d0=S.runners[r0].dispensed,d1=S.runners[r1].dispensed;
-    html+='<div class="binome-setup-card"><h2>Binôme '+(b===0?'A':'B')+'</h2>';
-    if(d0&&d1){html+='<p style="color:var(--muted);font-size:.85rem;">Les deux élèves sont dispensés.</p>';}
-    else if(d0){html+='<p style="font-size:.85rem;"><b style="color:var(--accent)">'+n1+'</b> court ('+n0+' est dispensé)</p>';}
-    else if(d1){html+='<p style="font-size:.85rem;"><b style="color:var(--accent)">'+n0+'</b> court ('+n1+' est dispensé)</p>';}
-    else{
-      html+='<p style="color:var(--muted);font-size:.8rem;margin-bottom:6px;">Qui court en premier pour cette série ?</p>'
-        +'<div class="role-choice" id="roleChoice'+b+'">'
-        +'<button class="role-opt active" id="roleOpt'+b+'_0" onclick="setFirstRunner('+b+','+r0+')">🏃 '+n0+'<br><span style="font-size:.65rem;opacity:.8;">Court en 1er</span></button>'
-        +'<button class="role-opt" id="roleOpt'+b+'_1" onclick="setFirstRunner('+b+','+r1+')">🏃 '+n1+'<br><span style="font-size:.65rem;opacity:.8;">Court en 1er</span></button>'
-        +'</div>';
-    }
-    html+='</div>';
-  }
-  document.getElementById('firstRunnerContent').innerHTML=html;
-  // Init G.colRole
-  for(var b=0;b<2;b++){
-    var r0=b*2,r1=b*2+1,d0=S.runners[r0].dispensed,d1=S.runners[r1].dispensed;
-    G.colRole[b]=d0?r1:r0;
-  }
-}
+c.innerHTML='<div class="global-chrono"><div class="global-chrono-time" id="gTime">00:00</div><div class="global-chrono-bar"><div class="global-chrono-bar-inner" id="gBar"></div></div><div class="global-btns"><button class="btn btn-primary" id="gSS" onclick="gStartStop()" style="font-size:.9rem;padding:8px 16px;">▶</button><button class="btn btn-warning" id="gNext" onclick="gNextSerie()" style="display:none;font-size:.8rem;padding:6px 12px;">→</button></div></div>'+
+'<div class="course-split">'+buildLaneHTML(0,rA,rAr,obsNameA,si,'left')+buildLaneHTML(1,rB,rBr,obsNameB,si,'right')+'</div>';
+S.chrono.running=false;S.chrono.finished=false;S.chrono.elapsed=0;
+S.lanes=[{plotCount:0,colCount:0,marcheNext:false},{plotCount:0,colCount:0,marcheNext:false}];}
 
-function setFirstRunner(binome,runnerIdx){
-  G.colRole[binome]=runnerIdx;
-  var r0=binome*2,r1=binome*2+1;
-  document.getElementById('roleOpt'+binome+'_0').classList.toggle('active',runnerIdx===r0);
-  document.getElementById('roleOpt'+binome+'_1').classList.toggle('active',runnerIdx===r1);
-}
+function buildLaneHTML(lane,rIdx,runner,obsName,si,side){
+const serie=S.series[si];
+return '<div class="lane '+side+'" id="lane'+lane+'"><div class="lane-header"><div class="lane-runner">'+runner.name+'</div>'+(obsName?'<div class="lane-observer">👁 '+obsName+'</div>':'')+'<div class="lane-serie">S'+(si+1)+' · '+ms2s(serie.dureeMs)+' · '+runner.projets[si]+' km/h</div></div><div class="lane-chrono" id="lc'+lane+'">00:00</div><div class="lane-target">Obj: '+ms2s(serie.dureeMs)+'</div><div class="lane-bar"><div class="lane-bar-inner" id="lb'+lane+'"></div></div><div class="lane-info"><div class="lane-info-box"><div class="v accent" id="lvm'+lane+'">—</div><div class="l">Vit</div></div><div class="lane-info-box"><div class="v accent">'+runner.projets[si]+'</div><div class="l">Cible</div></div><div class="lane-info-box"><div class="v accent" id="lec'+lane+'">—</div><div class="l">Écart</div></div></div><div class="lane-feedback" id="lfb'+lane+'"></div><div class="lane-plot off" id="lp'+lane+'" onclick="lClickPlot('+lane+')">PLOT</div><div class="lane-btns"><div class="lane-btn lane-btn-marche" id="lm'+lane+'" onclick="lTogMarche('+lane+')">🚶</div><button class="lane-btn lane-btn-stop" id="ls'+lane+'" onclick="lStopEarly('+lane+')" style="display:none">⏹</button></div></div>';}
 
-function goStep3b(){
-  buildCourseUI4();goStep(2);
-}
+function gStartStop(){const si=S.chrono.serieIdx,serie=S.series[si];
+if(S.chrono.finished){document.getElementById('gNext').style.display='inline-flex';return;}
+if(!S.chrono.running){S.chrono.running=true;S.chrono.start=Date.now()-S.chrono.elapsed;
+// Init colStarts for both lanes
+[0,1].forEach(l=>{const ri=_splitRunners[l],d=S.data[ri][si];if(d.colStarts.length===0){d.colStarts.push(0);S.lanes[l].colCount=0;S.lanes[l].plotCount=0;}if(!d.stoppedEarly)document.getElementById('lp'+l).classList.remove('off');document.getElementById('ls'+l).style.display=d.stoppedEarly?'none':'inline-flex';});
+document.getElementById('gSS').textContent='⏸';document.getElementById('gSS').className='btn btn-danger';
+S.chrono.interval=setInterval(()=>{S.chrono.elapsed=Date.now()-S.chrono.start;document.getElementById('gTime').textContent=ms2s(S.chrono.elapsed);
+[0,1].forEach(l=>{document.getElementById('lc'+l).textContent=ms2s(S.chrono.elapsed);const p=Math.min(S.chrono.elapsed/serie.dureeMs*100,100);document.getElementById('lb'+l).style.width=p+'%';});
+document.getElementById('gBar').style.width=Math.min(S.chrono.elapsed/serie.dureeMs*100,100)+'%';
+// Update col counts
+[0,1].forEach(l=>{const ri=_splitRunners[l],d=S.data[ri][si];if(d.stoppedEarly)return;const ce=S.chrono.elapsed-(d.colStarts[S.lanes[l].colCount]||0);if(ce>=90000&&S.lanes[l].colCount<serie.nbCols-1){S.lanes[l].colCount++;S.lanes[l].plotCount=0;d.colStarts.push(S.chrono.elapsed);}});
+if(S.chrono.elapsed>=serie.dureeMs){clearInterval(S.chrono.interval);S.chrono.running=false;S.chrono.finished=true;document.getElementById('gSS').textContent='✓';document.getElementById('gSS').className='btn btn-success';[0,1].forEach(l=>{document.getElementById('lp'+l).classList.add('off');document.getElementById('ls'+l).style.display='none';});}},100);
+}else{clearInterval(S.chrono.interval);S.chrono.running=false;document.getElementById('gSS').textContent='▶';document.getElementById('gSS').className='btn btn-primary';[0,1].forEach(l=>document.getElementById('lp'+l).classList.add('off'));}}
 
-// ════════════════════════════════════════════════════════
-//  STEP 3: COURSE — MODE 4 SPLIT-SCREEN
-// ════════════════════════════════════════════════════════
-function buildCourseUI4(){
-  // Full-width mode for tablets
-  document.getElementById('screen3').classList.add('mode4');
-  // Reset G
-  G.globalElapsed=0;G.globalRunning=false;G.globalFinished=false;G.currentSerie=0;
-  clearInterval(G.globalInterval);G.globalInterval=null;
-  G.col=[{plotCount:0,marcheNext:false,stopped:false,stoppedAt:0,colCount:0},{plotCount:0,marcheNext:false,stopped:false,stoppedAt:0,colCount:0}];
+function lClickPlot(lane){if(!S.chrono.running)return;const ri=_splitRunners[lane],si=S.chrono.serieIdx,d=S.data[ri][si],L=S.lanes[lane],now=S.chrono.elapsed;if(d.stoppedEarly)return;d.passages.push({t:now,col:L.colCount,isMarche:L.marcheNext});if(L.marcheNext)d.marcheIndices.push(d.passages.length-1);L.marcheNext=false;document.getElementById('lm'+lane).classList.remove('active');L.plotCount++;
+const cp=d.passages.filter(p=>p.col===L.colCount),cs=d.colStarts[L.colCount]||0,ce=now-cs,vc=S.runners[ri].projets[si];if(ce>0&&cp.length>0){const vm=cp.length*S.distPlots/(ce/1000)*3.6,ec=vm-vc;document.getElementById('lvm'+lane).textContent=vm.toFixed(1);document.getElementById('lec'+lane).textContent=(ec>=0?'+':'')+ec.toFixed(1);const fb=document.getElementById('lfb'+lane);if(Math.abs(ec)<=0.5){fb.className='lane-feedback ok';fb.textContent='✓ ZONE';document.getElementById('lec'+lane).className='v green';}else if(ec>0.5){fb.className='lane-feedback fast';fb.textContent='⚡ RAPIDE';document.getElementById('lec'+lane).className='v red';}else{fb.className='lane-feedback slow';fb.textContent='🐢 LENT';document.getElementById('lec'+lane).className='v yellow';}}}
+function lTogMarche(lane){S.lanes[lane].marcheNext=!S.lanes[lane].marcheNext;document.getElementById('lm'+lane).classList.toggle('active',S.lanes[lane].marcheNext);}
+function lStopEarly(lane){const ri=_splitRunners[lane];if(!confirm('Arrêter '+S.runners[ri].name+' ?'))return;S.data[ri][S.chrono.serieIdx].stoppedEarly=true;S.data[ri][S.chrono.serieIdx].stoppedAtMs=S.chrono.elapsed;document.getElementById('lp'+lane).classList.add('off');document.getElementById('ls'+lane).style.display='none';document.getElementById('lfb'+lane).className='lane-feedback';document.getElementById('lfb'+lane).textContent='⏹ Arrêté';document.getElementById('lfb'+lane).style.color='var(--orange)';}
 
-  var tabs=document.getElementById('courseTabs');tabs.innerHTML='';
-  var panels=document.getElementById('coursePanels');
-  panels.innerHTML=''
-    // Global chrono bar
-    +'<div class="split-chrono-wrap">'
-    +'  <div class="split-chrono" id="schrono">00:00</div>'
-    +'  <div class="split-serie-info" id="sserieInfo">Série 1/'+S.series.length+'</div>'
-    +'  <div class="split-bar-wrap"><div class="split-bar" id="sbar" style="width:0%"></div></div>'
-    +'  <button id="sbtnStart" class="btn btn-primary" onclick="toggleGlobalChrono()">▶ DÉMARRER</button>'
-    +'  <button id="sbtnNext" class="split-next-btn" onclick="nextSeriesAll()">→ SUIVANTE</button>'
-    +'</div>'
-    // Split columns
-    +'<div class="split-screen" id="splitCols"></div>'
-    // Series pills
-    +'<div class="series-status-list" id="globalPills" style="justify-content:center;margin-top:6px;"></div>';
+function gNextSerie(){
+// In split mode: after a serie, swap runners within each binôme
+// The observer becomes runner and vice versa
+const si=S.chrono.serieIdx;
+// Find next serie
+let nextSi=-1;for(let i=si+1;i<S.series.length;i++){nextSi=i;break;}
+if(nextSi===-1){alert('Toutes les séries terminées !');return;}
 
-  // Build each column
-  var splitCols=document.getElementById('splitCols');
-  for(var col=0;col<2;col++){
-    var colDiv=document.createElement('div');
-    colDiv.className='binome-col col-'+(col===0?'a':'b');
-    colDiv.id='col'+col;
-    splitCols.appendChild(colDiv);
-  }
-  renderColHeaders();
-  renderGlobalPills();
-}
+// Swap within each binôme: the partner who didn't run now runs
+function swapBinome(base){const r0=base,r1=base+1;const wasRunning=_splitRunners.includes(r0)?r0:r1;const partner=wasRunning===r0?r1:r0;// If partner is dispensed, same runner continues
+if(S.runners[partner].dispensed)return wasRunning;return partner;}
+const newA=swapBinome(0),newB=swapBinome(2);
 
-function getColRunner(col){return G.colRole[col];}
-function getColObserver(col){
-  var r=G.colRole[col];var binome=col;var r0=binome*2,r1=binome*2+1;
-  return r===r0?r1:r0;
-}
+S.chrono.serieIdx=nextSi;S.chrono.elapsed=0;document.getElementById('gNext').style.display='none';
+buildSplitCourse(newA,newB);}
 
-function renderColHeaders(){
-  for(var col=0;col<2;col++){
-    var colDiv=document.getElementById('col'+col);if(!colDiv)return;
-    var runnerIdx=getColRunner(col);var observerIdx=getColObserver(col);
-    var runner=S.runners[runnerIdx];var observer=S.runners[observerIdx];
-    var bothDispensed=runner.dispensed&&observer.dispensed;
-    var si=G.currentSerie;
-    var cible=(!runner.dispensed&&runner.projets&&runner.projets[si])?runner.projets[si]:'—';
-    var observerName=observer.dispensed?observer.name+' 🩹':observer.name;
-    colDiv.innerHTML='<div class="col-header col-'+(col===0?'a':'b')+'">BINÔME '+(col===0?'A':'B')+'</div>';
-    if(bothDispensed){
-      colDiv.innerHTML+='<div class="col-dispensed-info"><div style="font-size:1.5rem">🩹</div><div style="font-size:.85rem;color:var(--muted)">Tous dispensés</div></div>';
-      return;
-    }
-    colDiv.innerHTML+=''
-      +'<div class="col-runner-name" id="colRunnerName'+col+'">🏃 '+runner.name+'</div>'
-      +'<div class="col-observer-row" id="colObsRow'+col+'">👁 '+observerName+'</div>'
-      +'<div style="text-align:center;font-size:.65rem;color:var(--muted);">Cible : <b id="colCible'+col+'" style="color:var(--accent)">'+cible+' km/h</b></div>'
-      +'<div class="col-speed-info">'
-      +'<div class="col-speed-box"><span class="v accent" id="colVit'+col+'">—</span><span class="l">Vit km/h</span></div>'
-      +'<div class="col-speed-box"><span class="v" id="colEcart'+col+'">—</span><span class="l">Écart</span></div>'
-      +'<div class="col-speed-box"><span class="v accent" id="colPlots'+col+'">0</span><span class="l">Plots</span></div>'
-      +'</div>'
-      +'<div class="col-feedback hidden" id="colFeedback'+col+'">—</div>'
-      +'<div class="col-plot-wrap"><button class="btn-col-plot disabled" id="colPlotBtn'+col+'" onclick="clickPlotCol('+col+')">PLOT</button></div>'
-      +'<div class="col-actions">'
-      +'<button class="btn-col-marche" id="colMarcheBtn'+col+'" onclick="toggleMarcheCol('+col+')">🚶 MARCHE</button>'
-      +'<button class="btn-col-stop" id="colStopBtn'+col+'" onclick="stopColEarly('+col+')" disabled>⏹ ARRÊTER</button>'
-      +'</div>'
-      +'<div class="col-table-wrap" id="colTable'+col+'"></div>';
-  }
-}
+// ══════ STEP 4 — RESULTS ══════
+function goStep4(){if(S.chrono.running){alert('Arrêtez d\'abord');return;}renderResults();goStep(3);}
+function calcStats(r,si){const runner=S.runners[r],serie=S.series[si],d=S.data[r][si];const n=d.passages.length,dist=n*S.distPlots;const dur=d.stoppedEarly?d.stoppedAtMs:serie.dureeMs;const vm=dur>0?(dist/(dur/1000)*3.6):0;const c=runner.projets[si]||0,ec=vm-c;return{n,dist,dur,vm,c,ec,zone:Math.abs(ec)<=0.5,marches:d.marcheIndices.length,stopped:d.stoppedEarly};}
+function renderResults(){const w=document.getElementById('resultsContent');let h='<p style="color:var(--muted);margin-bottom:14px;font-size:.85rem">'+S.nomSeance+(S.nomClasse?' · '+S.nomClasse:'')+' · '+S.dateSeance+'</p>';
+for(let r=0;r<S.nbRunners;r++){const rr=S.runners[r];if(rr.dispensed){h+='<div class="result-block dispensed"><h3 style="color:var(--orange)">🩹 '+rr.name+' — Dispensé</h3><p style="color:var(--muted);font-size:.8rem">Observateur de '+(S.runners[rr.observes]?.name||'—')+'</p></div>';continue;}
+h+='<div class="result-block"><h3>'+rr.name+' — VMA '+rr.vma+'</h3>';S.series.forEach((_,si)=>{const st=calcStats(r,si);h+='<div style="margin:6px 0;padding:6px;background:var(--bg);border-radius:6px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:.85rem"><span style="font-family:Bebas Neue;color:var(--accent)">S'+(si+1)+'</span><span style="color:var(--muted);font-size:.75rem">'+ms2s(st.dur)+(st.stopped?' ⏹':'')+'</span><span>'+st.n+'p · '+st.dist+'m</span><b style="color:'+(st.zone?'var(--green)':st.ec>0.5?'var(--red)':'var(--yellow)')+'">'+st.vm.toFixed(1)+' km/h</b><span class="tag '+(st.zone?'tag-green':'tag-red')+'">'+(st.zone?'✓':st.ec>0.5?'⚡':'🐢')+'</span>'+(st.stopped?'<span class="tag tag-orange">⏹</span>':'')+(st.marches?'<span class="tag tag-red">🚶'+st.marches+'</span>':'')+'</div>';});h+='</div>';}
+w.innerHTML=h;}
 
-function renderGlobalPills(){
-  var wrap=document.getElementById('globalPills');if(!wrap)return;
-  wrap.innerHTML='';
-  S.series.forEach(function(_,i){
-    var stoppedA=S.data[G.colRole[0]]&&S.data[G.colRole[0]][i]&&S.data[G.colRole[0]][i].stopped;
-    var stoppedB=S.data[G.colRole[1]]&&S.data[G.colRole[1]][i]&&S.data[G.colRole[1]][i].stopped;
-    var done=S.data[G.colRole[0]]&&S.data[G.colRole[0]][i]&&S.data[G.colRole[0]][i].passages&&S.data[G.colRole[0]][i].passages.length>0;
-    var cls='series-pill'+(stoppedA||stoppedB?' stopped':i===G.currentSerie?' active':done?' done':'');
-    var pill=document.createElement('div');pill.className=cls;
-    pill.textContent='S'+(i+1);
-    wrap.appendChild(pill);
-  });
-}
+// ══════ STEP 5 — QR ══════
+function goStep5(){goStep(4);const g=document.getElementById('qrGrid');g.innerHTML='';
+for(let r=0;r<S.nbRunners;r++){if(S.runners[r].dispensed)continue;const rr=S.runners[r];
+const pl={v:1,seance:S.nomSeance,classe:S.nomClasse,date:S.dateSeance,distPlots:S.distPlots,distPiste:S.distPiste,series:S.series.map(s=>({dureeMs:s.dureeMs,nbCols:s.nbCols})),runner:{name:rr.name,vma:rr.vma,series:S.series.map((_,si)=>{const st=calcStats(r,si);return{idx:si,dureeMs:st.dur,nbCols:S.series[si].nbCols,cible:st.c,pctVma:Math.round(st.c/rr.vma*100),passages:st.n,dist:st.dist,vitMoy:+st.vm.toFixed(2),ecart:+st.ec.toFixed(2),zone:st.zone,marches:st.marches};})}};
+const j=JSON.stringify(pl),cmp=LZString.compressToEncodedURIComponent(j),url=AGG_URL+'?d='+cmp;const bs=new TextEncoder().encode(url).length,ok=bs<=2300;
+const card=document.createElement('div');card.className='qr-card';card.dataset.url=url;
+card.innerHTML='<h3>'+rr.name+'</h3><div class="qr-wrap" id="qr'+r+'"></div><div class="qr-status '+(ok?'ok':'warn')+'">'+(ok?'✓ OK':'⚠ Dense')+'</div><div class="scanner-url">'+url+'</div><div style="margin-top:8px"><button class="btn btn-secondary" style="font-size:.75rem;padding:6px 10px" onclick="cpUrl(this)">📋 Copier</button></div>';
+g.appendChild(card);
+try{new QRCode(document.getElementById('qr'+r),{text:url,width:200,height:200,correctLevel:ok?QRCode.CorrectLevel.M:QRCode.CorrectLevel.L});}catch(e){document.getElementById('qr'+r).innerHTML='<p style="color:var(--red);font-size:.75rem">❌ Trop gros</p>';}}}
+function cpUrl(btn){const u=btn.closest('.qr-card').dataset.url;navigator.clipboard.writeText(u).then(()=>{btn.textContent='✓';setTimeout(()=>btn.textContent='📋 Copier',1500);});}
 
-function toggleGlobalChrono(){
-  if(G.globalFinished){return;}
-  if(!G.globalRunning){
-    G.globalRunning=true;
-    var si=G.currentSerie;var serie=S.series[si];
-    // Init col data if first start
-    for(var col=0;col<2;col++){
-      var r=getColRunner(col);if(S.runners[r].dispensed)continue;
-      if(!G.col[col].started){
-        G.col[col].started=true;G.col[col].colCount=0;G.col[col].plotCount=0;
-        S.data[r][si].colStarts=[G.globalElapsed];
-      }
-      document.getElementById('colStopBtn'+col).disabled=false;
-      document.getElementById('colPlotBtn'+col).classList.remove('disabled');
-    }
-    var startRef=Date.now()-G.globalElapsed;
-    document.getElementById('sbtnStart').textContent='⏸ PAUSE';
-    document.getElementById('sbtnStart').className='btn btn-danger';
-    G.globalInterval=setInterval(function(){
-      G.globalElapsed=Date.now()-startRef;
-      var pct=Math.min(G.globalElapsed/serie.dureeMs*100,100);
-      document.getElementById('schrono').textContent=msToDurStr(G.globalElapsed);
-      document.getElementById('sbar').style.width=pct+'%';
-      document.getElementById('sbar').style.background=pct>95?'var(--red)':pct>80?'var(--yellow)':'var(--accent)';
-      // Column tracking
-      for(var col=0;col<2;col++){
-        var r=getColRunner(col);if(S.runners[r].dispensed||G.col[col].stopped)continue;
-        var d=S.data[r][si];
-        var colElapsed=G.globalElapsed-(d.colStarts[G.col[col].colCount]||0);
-        if(colElapsed>=90000&&G.col[col].colCount<serie.nbCols-1){
-          G.col[col].colCount++;G.col[col].plotCount=0;d.colStarts.push(G.globalElapsed);
-        }
-      }
-      if(G.globalElapsed>=serie.dureeMs){
-        clearInterval(G.globalInterval);G.globalRunning=false;G.globalFinished=true;
-        G.globalElapsed=serie.dureeMs;
-        document.getElementById('schrono').textContent=msToDurStr(serie.dureeMs);
-        document.getElementById('sbar').style.width='100%';document.getElementById('sbar').style.background='var(--green)';
-        document.getElementById('sbtnStart').textContent='✓ FIN';document.getElementById('sbtnStart').className='btn btn-success';document.getElementById('sbtnStart').disabled=true;
-        for(var col=0;col<2;col++){document.getElementById('colPlotBtn'+col).classList.add('disabled');document.getElementById('colStopBtn'+col).disabled=true;}
-        document.getElementById('sbtnNext').style.display=S.currentSerie+1<S.series.length?'inline-flex':'none';
-        document.getElementById('sbtnNext').style.display=(G.currentSerie+1<S.series.length)?'inline-flex':'none';
-      }
-    },100);
-  } else {
-    clearInterval(G.globalInterval);G.globalRunning=false;
-    document.getElementById('sbtnStart').textContent='▶ REPRENDRE';
-    document.getElementById('sbtnStart').className='btn btn-primary';
-    for(var col=0;col<2;col++){document.getElementById('colPlotBtn'+col).classList.add('disabled');}
-  }
-}
+// ══════ EXPORT ══════
+function exportCSV(){const rows=[['Séance',S.nomSeance,'Classe',S.nomClasse,'Date',S.dateSeance],[]];
+for(let r=0;r<S.nbRunners;r++){const rr=S.runners[r];if(rr.dispensed){rows.push([rr.name,'DISPENSÉ','Observe: '+(S.runners[rr.observes]?.name||'')]);rows.push([]);continue;}
+rows.push([rr.name,'VMA '+rr.vma]);rows.push(['Série','Durée','Cible','%VMA','Passages','Dist','VitMoy','Écart','Zone','Marches','Arrêt']);
+S.series.forEach((_,si)=>{const st=calcStats(r,si);rows.push(['S'+(si+1),ms2s(st.dur),st.c,Math.round(st.c/rr.vma*100)+'%',st.n,st.dist,st.vm.toFixed(1),st.ec.toFixed(1),st.zone?'OUI':'NON',st.marches,st.stopped?'OUI':'']);});rows.push([]);}
+const csv=rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');
+const b=new Blob(['\uFEFF'+csv],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='VMA_'+(S.nomClasse||'').replace(/\s+/g,'_')+'_'+S.dateSeance+'.csv';a.click();}
 
-function clickPlotCol(col){
-  if(!G.globalRunning)return;
-  var si=G.currentSerie;var r=getColRunner(col);
-  if(S.runners[r].dispensed||G.col[col].stopped)return;
-  var d=S.data[r][si];var c=G.col[col];
-  var isM=c.marcheNext;
-  d.passages.push({t:G.globalElapsed,col:c.colCount,isMarche:isM});
-  if(isM)d.marcheIndices.push(d.passages.length-1);
-  c.marcheNext=false;document.getElementById('colMarcheBtn'+col).classList.remove('active');
-  c.plotCount++;
-  document.getElementById('colPlots'+col).textContent=d.passages.length;
-  // Speed calc
-  var colPassages=d.passages.filter(function(p){return p.col===c.colCount;});
-  var colStart=d.colStarts[c.colCount]||0;
-  var colElapsedNow=G.globalElapsed-colStart;
-  var cible=S.runners[r].projets[si];
-  if(colElapsedNow>0&&colPassages.length>0){
-    var vitMoy=colPassages.length*S.distPlots/(colElapsedNow/1000)*3.6;
-    var ecart=vitMoy-cible;
-    document.getElementById('colVit'+col).textContent=vitMoy.toFixed(1);
-    document.getElementById('colVit'+col).className='v '+(Math.abs(ecart)<=0.5?'green':ecart>0.5?'red':'yellow');
-    document.getElementById('colEcart'+col).textContent=(ecart>=0?'+':'')+ecart.toFixed(1);
-    document.getElementById('colEcart'+col).className='v '+(Math.abs(ecart)<=0.5?'green':ecart>0.5?'red':'yellow');
-    var fb=document.getElementById('colFeedback'+col);
-    if(Math.abs(ecart)<=0.5){fb.className='col-feedback ok';fb.textContent='✓ ZONE';}
-    else if(ecart>0.5){fb.className='col-feedback fast';fb.textContent='⚡ RAPIDE';}
-    else{fb.className='col-feedback slow';fb.textContent='🐢 LENT';}
-  }
-  renderColTable(col);
-}
-
-function renderColTable(col){
-  var si=G.currentSerie;var r=getColRunner(col);
-  var wrap=document.getElementById('colTable'+col);if(!wrap)return;
-  if(S.runners[r].dispensed){wrap.innerHTML='';return;}
-  var d=S.data[r][si];
-  if(!d||d.passages.length===0){wrap.innerHTML='<p style="color:var(--muted);font-size:.6rem;text-align:center;padding:4px;">En attente…</p>';return;}
-  var nbCols=S.series[si].nbCols;var colGroups=[];
-  for(var cc=0;cc<nbCols;cc++){var g=[];d.passages.forEach(function(p){if(p.col===cc)g.push(p);});colGroups.push(g);}
-  var maxRows=Math.max.apply(null,colGroups.map(function(g){return g.length;}).concat([1]));
-  var html='<table class="col-pass"><thead><tr><th>#</th>';
-  for(var cc=0;cc<nbCols;cc++) html+='<th>C'+(cc+1)+'</th>';
-  html+='</tr></thead><tbody>';
-  for(var row=maxRows-1;row>=0;row--){
-    html+='<tr><td style="color:var(--muted)">'+(row+1)+'</td>';
-    for(var cc=0;cc<nbCols;cc++){var p=colGroups[cc][row];html+=p?'<td class="'+(p.isMarche?'colm':'colx')+'">'+(p.isMarche?'🚶':'×')+'</td>':'<td></td>';}
-    html+='</tr>';
-  }
-  html+='</tbody></table>';
-  wrap.innerHTML=html;
-  wrap.scrollTop=wrap.scrollHeight;
-}
-
-function toggleMarcheCol(col){
-  G.col[col].marcheNext=!G.col[col].marcheNext;
-  document.getElementById('colMarcheBtn'+col).classList.toggle('active',G.col[col].marcheNext);
-}
-
-function stopColEarly(col){
-  var si=G.currentSerie;var r=getColRunner(col);
-  if(G.col[col].stopped)return;
-  if(!confirm(S.runners[r].name+' : arrêter la série '+(si+1)+' ?\nLes données partielles seront conservées.'))return;
-  G.col[col].stopped=true;G.col[col].stoppedAt=G.globalElapsed;
-  var d=S.data[r][si];d.stopped=true;d.stoppedAt=G.globalElapsed;
-  document.getElementById('colPlotBtn'+col).classList.add('disabled');
-  document.getElementById('colStopBtn'+col).disabled=true;
-  document.getElementById('colFeedback'+col).className='col-feedback slow';
-  document.getElementById('colFeedback'+col).textContent='⏹ ARRÊTÉE';
-  // If both columns stopped or finished → show next
-  var bothDone=true;
-  for(var c=0;c<2;c++){
-    var rc=getColRunner(c);
-    if(!S.runners[rc].dispensed&&!G.col[c].stopped&&!G.globalFinished) bothDone=false;
-  }
-  if(bothDone&&G.currentSerie+1<S.series.length){
-    clearInterval(G.globalInterval);G.globalRunning=false;
-    document.getElementById('sbtnStart').disabled=true;
-    document.getElementById('sbtnNext').style.display='inline-flex';
-  }
-}
-
-function nextSeriesAll(){
-  G.currentSerie++;
-  if(G.currentSerie>=S.series.length){alert('Toutes les séries terminées !');return;}
-  // Swap roles in each binôme
-  for(var col=0;col<2;col++){
-    var r0=col*2,r1=col*2+1;
-    var prevRunner=G.colRole[col];
-    G.colRole[col]=prevRunner===r0?r1:r0;
-  }
-  // Reset global chrono and col states
-  clearInterval(G.globalInterval);G.globalInterval=null;
-  G.globalElapsed=0;G.globalRunning=false;G.globalFinished=false;
-  for(var col=0;col<2;col++) G.col[col]={plotCount:0,marcheNext:false,stopped:false,stoppedAt:0,colCount:0,started:false};
-  document.getElementById('schrono').textContent='00:00';
-  document.getElementById('sbar').style.width='0%';document.getElementById('sbar').style.background='var(--accent)';
-  document.getElementById('sbtnStart').textContent='▶ DÉMARRER';document.getElementById('sbtnStart').className='btn btn-primary';document.getElementById('sbtnStart').disabled=false;
-  document.getElementById('sbtnNext').style.display='none';
-  document.getElementById('sserieInfo').textContent='Série '+(G.currentSerie+1)+'/'+S.series.length;
-  for(var col=0;col<2;col++){
-    document.getElementById('colPlotBtn'+col).classList.add('disabled');
-    document.getElementById('colStopBtn'+col).disabled=true;
-  }
-  renderColHeaders();
-  renderGlobalPills();
-  for(var col=0;col<2;col++) renderColTable(col);
-}
-
-// ════════════════════════════════════════════════════════
-//  STEP 3: COURSE
-// ════════════════════════════════════════════════════════
-function buildCourseUI(){
-  if(S.groupSize===4){buildCourseUI4();return;}
-  var tabs=document.getElementById('courseTabs');tabs.innerHTML='';
-  var panels=document.getElementById('coursePanels');panels.innerHTML='';
-  var activeRunners=[];
-  S.runners.forEach(function(run,r){if(!run.dispensed) activeRunners.push(r);});
-
-  activeRunners.forEach(function(r,idx){
-    var run=S.runners[r];
-    // Tab
-    var tab=document.createElement('button');
-    tab.className='runner-tab'+(idx===0?' active':'');
-    tab.id='ctab'+r;
-    tab.textContent=run.name;
-    tab.setAttribute('onclick','showCoursePanel('+r+')');
-    tabs.appendChild(tab);
-
-    // Panel
-    var panel=document.createElement('div');
-    panel.className='runner-panel'+(idx===0?' active':'');
-    panel.id='cpanel'+r;
-    
-    // Find observer
-    var partner=r%2===0?r+1:r-1;
-    var observer=S.runners[partner];
-    var obsText=observer?(observer.dispensed?observer.name+' (dispensé)':observer.name+' (quand ne court pas)'):'—';
-
-    panel.innerHTML=''
-      +'<div class="current-runner-badge"><div class="dot-live"></div><span id="cname'+r+'">'+run.name+'</span></div>'
-      +'<div style="color:var(--muted);font-size:.75rem;margin-bottom:6px;">Observateur : '+obsText+'</div>'
-      +'<div style="color:var(--muted);font-size:.75rem;margin-bottom:10px;" id="cserieLabel'+r+'">—</div>'
-      +'<div id="cseriesPills'+r+'" class="series-status-list"></div>'
-      +'<div class="card">'
-      +'  <div class="chrono-display" id="cchrono'+r+'">00:00</div>'
-      +'  <div class="chrono-target" id="ctarget'+r+'">—</div>'
-      +'  <div class="chrono-bar-wrap"><div class="chrono-bar" id="cbar'+r+'" style="width:0%"></div></div>'
-      +'  <div class="info-grid">'
-      +'    <div class="info-box"><div class="val accent" id="cvitmoy'+r+'">—</div><div class="lbl">Vit. moy.</div></div>'
-      +'    <div class="info-box"><div class="val accent" id="ccible'+r+'">—</div><div class="lbl">Cible</div></div>'
-      +'    <div class="info-box"><div class="val accent" id="cecart'+r+'">—</div><div class="lbl">Écart</div></div>'
-      +'  </div>'
-      +'  <div class="feedback-badge hidden" id="cfeedback'+r+'">—</div>'
-      +'  <div class="btn-plot-wrap"><button class="btn-plot disabled" id="cplot'+r+'" onclick="clickPlot('+r+')">'
-      +'    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>PLOT</button></div>'
-      +'  <div style="display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;">'
-      +'    <button class="btn-marche" id="cmarche'+r+'" onclick="toggleMarche('+r+')">🚶 MARCHE</button>'
-      +'    <button class="btn btn-primary" id="cstartstop'+r+'" onclick="startStopSerie('+r+')">▶ DÉMARRER</button>'
-      +'    <button class="btn-stop" id="cstop'+r+'" onclick="stopSerieEarly('+r+')">⏹ ARRÊTER</button>'
-      +'    <button class="btn btn-warning" id="cnext'+r+'" onclick="nextSerie('+r+')" style="display:none;">→ Suivante</button>'
-      +'  </div>'
-      +'</div>'
-      +'<div class="card"><h3>Passages</h3><div class="table-wrap" id="ctable'+r+'"></div></div>';
-    panels.appendChild(panel);
-  });
-
-  // Init first serie for all active runners
-  activeRunners.forEach(function(r){initRunnerSerie(r);});
-  if(activeRunners.length>0) S.activePanel=activeRunners[0];
-}
-
-function showCoursePanel(r){
-  document.querySelectorAll('.runner-panel').forEach(function(e){e.classList.remove('active');});
-  document.getElementById('cpanel'+r).classList.add('active');
-  document.querySelectorAll('#courseTabs .runner-tab').forEach(function(t){t.classList.remove('active');});
-  document.getElementById('ctab'+r).classList.add('active');
-  S.activePanel=r;
-}
-
-function initRunnerSerie(r){
-  var c=S.chrono[r];var si=c.currentSerie;
-  if(si>=S.series.length)return;
-  var serie=S.series[si];var run=S.runners[r];
-  c.running=false;c.finished=false;c.elapsed=0;c.colCount=0;c.plotCount=0;c.marcheNext=false;
-  clearInterval(c.interval);c.interval=null;
-  var el=function(id){return document.getElementById(id+r);};
-  if(!el('cchrono'))return;
-  el('cchrono').textContent='00:00';
-  el('ctarget').textContent='Objectif : '+msToDurStr(serie.dureeMs)+' · Cible '+run.projets[si]+' km/h';
-  el('cserieLabel').textContent='Série '+(si+1)+'/'+S.series.length;
-  el('cbar').style.width='0%';el('cbar').style.background='var(--accent)';
-  el('ccible').textContent=run.projets[si];
-  el('cvitmoy').textContent='—';el('cecart').textContent='—';
-  el('cecart').className='val accent';
-  el('cfeedback').className='feedback-badge hidden';
-  el('cstartstop').textContent='▶ DÉMARRER';el('cstartstop').className='btn btn-primary';
-  el('cnext').style.display='none';
-  el('cplot').classList.add('disabled');
-  el('cmarche').classList.remove('active');
-  // Series pills
-  var pills=el('cseriesPills');pills.innerHTML='';
-  S.series.forEach(function(_,i){
-    var d=S.data[r][i];
-    var cls='series-pill';
-    if(d.stopped) cls+=' stopped';
-    else if(i===si) cls+=' active';
-    else if(d.passages.length>0) cls+=' done';
-    var pill=document.createElement('div');pill.className=cls;
-    pill.textContent='S'+(i+1)+(d.stopped?' ⏹':(d.passages.length>0?' ✓':''));
-    pills.appendChild(pill);
-  });
-  renderTable(r);
-}
-
-function startStopSerie(r){
-  var c=S.chrono[r];var si=c.currentSerie;
-  if(si>=S.series.length)return;
-  if(c.finished){finishSerie(r);return;}
-  var el=function(id){return document.getElementById(id+r);};
-  if(!c.running){
-    c.running=true;c.start=Date.now()-c.elapsed;
-    var d=S.data[r][si];
-    if(d.colStarts.length===0){d.colStarts.push(0);c.colCount=0;c.plotCount=0;}
-    el('cstartstop').textContent='⏸ PAUSE';el('cstartstop').className='btn btn-danger';
-    el('cplot').classList.remove('disabled');
-    var serie=S.series[si];
-    c.interval=setInterval(function(){
-      c.elapsed=Date.now()-c.start;
-      el('cchrono').textContent=msToDurStr(c.elapsed);
-      var pct=Math.min(c.elapsed/serie.dureeMs*100,100);
-      el('cbar').style.width=pct+'%';
-      el('cbar').style.background=pct>95?'var(--red)':pct>80?'var(--yellow)':'var(--accent)';
-      var d2=S.data[r][si];
-      var colElapsed=c.elapsed-(d2.colStarts[c.colCount]||0);
-      if(colElapsed>=90000&&c.colCount<serie.nbCols-1){c.colCount++;c.plotCount=0;d2.colStarts.push(c.elapsed);}
-      if(c.elapsed>=serie.dureeMs){
-        clearInterval(c.interval);c.running=false;c.finished=true;
-        c.elapsed=serie.dureeMs;el('cchrono').textContent=msToDurStr(serie.dureeMs);
-        el('cbar').style.width='100%';el('cbar').style.background='var(--green)';
-        el('cstartstop').textContent='✓ TERMINER';el('cstartstop').className='btn btn-success';
-        el('cplot').classList.add('disabled');
-      }
-    },100);
-  } else {
-    clearInterval(c.interval);c.running=false;
-    el('cstartstop').textContent='▶ REPRENDRE';el('cstartstop').className='btn btn-primary';
-    el('cplot').classList.add('disabled');
-  }
-}
-
-function stopSerieEarly(r){
-  var c=S.chrono[r];var si=c.currentSerie;
-  if(!c.running&&c.elapsed===0)return;
-  if(!confirm(S.runners[r].name+' : arrêter la série '+(si+1)+' ?\nLes données partielles seront enregistrées.'))return;
-  clearInterval(c.interval);c.running=false;c.finished=false;
-  var d=S.data[r][si];
-  d.stopped=true;d.stoppedAt=c.elapsed;
-  var el=function(id){return document.getElementById(id+r);};
-  el('cstartstop').textContent='⏹ ARRÊTÉE';el('cstartstop').className='btn btn-secondary';el('cstartstop').disabled=true;
-  el('cplot').classList.add('disabled');
-  el('cbar').style.background='var(--red)';
-  el('cnext').style.display='inline-flex';
-  initRunnerSerie(r); // refresh pills
-  // Re-show stopped state
-  el('cchrono').textContent=msToDurStr(d.stoppedAt);
-  el('cstartstop').textContent='⏹ ARRÊTÉE';el('cstartstop').className='btn btn-secondary';el('cstartstop').disabled=true;
-  el('cnext').style.display='inline-flex';
-}
-
-function finishSerie(r){
-  var c=S.chrono[r];c.finished=false;
-  var el=function(id){return document.getElementById(id+r);};
-  el('cnext').style.display='inline-flex';
-}
-
-function nextSerie(r){
-  var c=S.chrono[r];
-  c.currentSerie++;
-  var el=function(id){return document.getElementById(id+r);};
-  el('cstartstop').disabled=false;
-  if(c.currentSerie>=S.series.length){alert('Toutes les séries terminées pour '+S.runners[r].name+' !');return;}
-  el('cnext').style.display='none';
-  c.elapsed=0;
-  initRunnerSerie(r);
-}
-
-function toggleMarche(r){
-  var c=S.chrono[r];c.marcheNext=!c.marcheNext;
-  document.getElementById('cmarche'+r).classList.toggle('active',c.marcheNext);
-}
-
-function clickPlot(r){
-  var c=S.chrono[r];if(!c.running)return;
-  var si=c.currentSerie;var d=S.data[r][si];
-  var isM=c.marcheNext;
-  d.passages.push({t:c.elapsed,col:c.colCount,isMarche:isM});
-  if(isM)d.marcheIndices.push(d.passages.length-1);
-  c.marcheNext=false;document.getElementById('cmarche'+r).classList.remove('active');
-  c.plotCount++;
-  // Compute speed
-  var colPassages=d.passages.filter(function(p){return p.col===c.colCount;});
-  var colStart=d.colStarts[c.colCount]||0;
-  var colElapsedNow=c.elapsed-colStart;
-  var vitCible=S.runners[r].projets[si];
-  var el=function(id){return document.getElementById(id+r);};
-  if(colElapsedNow>0&&colPassages.length>0){
-    var vitMoy=colPassages.length*S.distPlots/(colElapsedNow/1000)*3.6;
-    var ecart=vitMoy-vitCible;
-    el('cvitmoy').textContent=vitMoy.toFixed(1);
-    el('cecart').textContent=(ecart>=0?'+':'')+ecart.toFixed(1);
-    var fb=el('cfeedback');
-    if(Math.abs(ecart)<=0.5){fb.className='feedback-badge ok';fb.textContent='✓ DANS LA ZONE';el('cecart').className='val green';}
-    else if(ecart>0.5){fb.className='feedback-badge fast';fb.textContent='⚡ TROP RAPIDE';el('cecart').className='val red';}
-    else{fb.className='feedback-badge slow';fb.textContent='🐢 TROP LENT';el('cecart').className='val yellow';}
-  }
-  renderTable(r);
-}
-
-function renderTable(r){
-  var c=S.chrono[r];var si=c.currentSerie;
-  if(si>=S.series.length)return;
-  var serie=S.series[si];var d=S.data[r][si];
-  var wrap=document.getElementById('ctable'+r);if(!wrap)return;
-  if(d.passages.length===0){wrap.innerHTML='<p style="color:var(--muted);text-align:center;padding:16px;font-size:.8rem;">En attente…</p>';return;}
-  var nbCols=serie.nbCols;var colGroups=[];
-  for(var cc=0;cc<nbCols;cc++){var g=[];d.passages.forEach(function(p){if(p.col===cc)g.push(p);});colGroups.push(g);}
-  var maxRows=Math.max.apply(null,colGroups.map(function(g){return g.length;}).concat([1]));
-  var html='<table class="passage"><thead><tr><th>#</th>';
-  for(var cc=0;cc<nbCols;cc++) html+='<th>C'+(cc+1)+'</th>';
-  html+='</tr></thead><tbody>';
-  for(var row=maxRows-1;row>=0;row--){
-    html+='<tr><td style="color:var(--muted)">'+(row+1)+'</td>';
-    for(var cc=0;cc<nbCols;cc++){
-      var p=colGroups[cc][row];
-      html+=p?'<td class="'+(p.isMarche?'marche':'crossed')+'">'+(p.isMarche?'🚶':'×')+'</td>':'<td></td>';
-    }
-    html+='</tr>';
-  }
-  html+='</tbody></table>';wrap.innerHTML=html;
-}
-
-// ════════════════════════════════════════════════════════
-//  STEP 4: RÉSULTATS
-// ════════════════════════════════════════════════════════
-function goStep4(){
-  if(S.groupSize===4){
-    if(G.globalRunning){alert('La séance est en cours. Mettez en pause ou attendez la fin.');return;}
-  } else {
-    for(var r=0;r<S.groupSize;r++){
-      if(S.chrono[r]&&S.chrono[r].running){alert('Terminez ou arrêtez toutes les séries en cours.');return;}
-    }
-  }
-  renderResults();goStep(3);
-}
-
-function renderResults(){
-  var wrap=document.getElementById('resultsContent');
-  var html='<p style="color:var(--muted);margin-bottom:16px;font-size:.85rem;">'+S.nomSeance+(S.nomClasse?' · '+S.nomClasse:'')+' · '+S.dateSeance+'</p>';
-  for(var r=0;r<S.groupSize;r++){
-    var run=S.runners[r];
-    if(run.dispensed){
-      html+='<div class="result-block dispensed"><h3>🩹 '+run.name+' — Dispensé(e)</h3><p style="color:var(--muted);font-size:.8rem;">Rôle observateur uniquement</p></div>';
-      continue;
-    }
-    html+='<div class="result-block"><h3>'+run.name+' — VMA '+run.vma+' km/h</h3>';
-    S.series.forEach(function(serie,si){
-      var d=S.data[r][si];
-      var passages=d.passages.length,marche=d.marcheIndices.length;
-      var dist=passages*S.distPlots;
-      var durMs=d.stopped?d.stoppedAt:serie.dureeMs;
-      var vitMoy=durMs>0?(dist/(durMs/1000)*3.6):0;
-      var cible=run.projets[si],ecart=vitMoy-cible,zone=Math.abs(ecart)<=0.5;
-      var stoppedTag=d.stopped?'<span class="tag tag-red">⏹ ARRÊTÉE à '+msToDurStr(d.stoppedAt)+'</span>':'';
-      html+='<div style="margin:6px 0;padding:8px;background:var(--bg);border-radius:6px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;font-size:.85rem;">'
-        +'<span style="font-family:Bebas Neue,sans-serif;color:var(--accent)">S'+(si+1)+'</span>'
-        +'<span style="color:var(--muted);font-size:.75rem">'+msToDurStr(durMs)+'</span>'
-        +'<span>'+passages+' plots · '+dist+'m</span>'
-        +'<span>Vit: <b style="color:'+(zone?'var(--green)':ecart>0.5?'var(--red)':'var(--yellow)')+'">'+vitMoy.toFixed(1)+'</b> km/h</span>'
-        +'<span class="tag '+(zone?'tag-green':'tag-red')+'">'+(zone?'✓ ZONE':ecart>0.5?'⚡ RAPIDE':'🐢 LENT')+'</span>'
-        +(marche>0?'<span class="tag tag-red">🚶 '+marche+'</span>':'')
-        +stoppedTag
-        +'</div>';
-    });
-    html+='</div>';
-  }
-  wrap.innerHTML=html;
-}
-
-// ════════════════════════════════════════════════════════
-//  STEP 5: QR CODES
-// ════════════════════════════════════════════════════════
-function goStep5(){
-  goStep(4);
-  var grid=document.getElementById('qrGrid');
-  grid.innerHTML='<p style="color:var(--muted);text-align:center;padding:16px;">Génération…</p>';
-  setTimeout(function(){
-    grid.innerHTML='';
-    for(var r=0;r<S.groupSize;r++){
-      var run=S.runners[r];
-      if(run.dispensed) continue;
-      var runnerData={name:run.name,vma:run.vma,series:[]};
-      S.series.forEach(function(serie,si){
-        var d=S.data[r][si];
-        var passages=d.passages.length,dist=passages*S.distPlots;
-        var durMs=d.stopped?d.stoppedAt:serie.dureeMs;
-        var vitMoy=durMs>0?(dist/(durMs/1000)*3.6):0;
-        var cible=run.projets[si],ecart=vitMoy-cible;
-        runnerData.series.push({idx:si,dureeMs:serie.dureeMs,nbCols:serie.nbCols,cible:cible,pctVma:Math.round(cible/run.vma*100),passages:passages,dist:dist,vitMoy:parseFloat(vitMoy.toFixed(2)),ecart:parseFloat(ecart.toFixed(2)),zone:Math.abs(ecart)<=0.5,marches:d.marcheIndices.length,stopped:d.stopped,stoppedAt:d.stoppedAt});
-      });
-      var payload={v:2,seance:S.nomSeance,classe:S.nomClasse,date:S.dateSeance,distPlots:S.distPlots,distPiste:S.distPiste,series:S.series.map(function(s){return{dureeMs:s.dureeMs,nbCols:s.nbCols};}),runner:runnerData};
-      var json=JSON.stringify(payload);
-      var compressed=LZString.compressToEncodedURIComponent(json);
-      var url=AGGREGATOR_BASE_URL+'?d='+compressed;
-      var byteSize=new TextEncoder().encode(url).length;
-      var kb=(byteSize/1024).toFixed(1);
-      var isOk=byteSize<=2300;
-
-      var card=document.createElement('div');card.className='qr-card';card.dataset.url=url;
-      card.innerHTML='<h3>'+run.name+'</h3><p>'+S.nomSeance+' · '+S.dateSeance+'</p><div class="qr-wrap" id="qr'+r+'"></div><div class="qr-size-note">'+byteSize+' oct ('+kb+' ko)</div>'
-        +(isOk?'<div class="qr-status ok">✓ OK</div>':'<div class="qr-status warn">⚠ Dense</div>')
-        +'<div class="scanner-url">'+url+'</div>'
-        +'<div style="margin-top:8px;"><button class="btn btn-secondary" style="font-size:.75rem;padding:6px 12px;letter-spacing:1px;" onclick="copyUrl(this)">📋 Copier</button></div>';
-      grid.appendChild(card);
-      try{new QRCode(document.getElementById('qr'+r),{text:url,width:200,height:200,correctLevel:isOk?QRCode.CorrectLevel.M:QRCode.CorrectLevel.L});}
-      catch(e){document.getElementById('qr'+r).innerHTML='<p style="color:var(--red);font-size:.75rem;">❌ QR trop gros. Copiez l\'URL.</p>';}
-    }
-  },100);
-}
-
-function copyUrl(btn){
-  var url=btn.closest('.qr-card').dataset.url;
-  navigator.clipboard.writeText(url).then(function(){btn.textContent='✓ Copié !';setTimeout(function(){btn.textContent='📋 Copier';},2000);}).catch(function(){alert('Copie échouée');});
-}
-
-// ════════════════════════════════════════════════════════
-//  EXPORT CSV
-// ════════════════════════════════════════════════════════
-function exportCSV(){
-  var rows=[['Séance',S.nomSeance,'Classe',S.nomClasse,'Date',S.dateSeance,'Piste',S.distPiste+'m','Plots',S.distPlots+'m'],[]];
-  for(var r=0;r<S.groupSize;r++){
-    var run=S.runners[r];
-    if(run.dispensed){rows.push([run.name,'DISPENSÉ']);rows.push([]);continue;}
-    rows.push([run.name,'VMA '+run.vma+' km/h']);
-    rows.push(['Série','Durée','Cible','%VMA','Passages','Dist(m)','Vit moy','Écart','Zone','Marches','Statut']);
-    S.series.forEach(function(serie,si){
-      var d=S.data[r][si];var passages=d.passages.length,dist=passages*S.distPlots;
-      var durMs=d.stopped?d.stoppedAt:serie.dureeMs;
-      var vitMoy=durMs>0?(dist/(durMs/1000)*3.6):0;
-      var cible=run.projets[si],ecart=(vitMoy-cible).toFixed(1);
-      rows.push(['S'+(si+1),msToDurStr(durMs),cible,Math.round(cible/run.vma*100)+'%',passages,dist,vitMoy.toFixed(1),ecart,Math.abs(vitMoy-cible)<=0.5?'OUI':'NON',d.marcheIndices.length,d.stopped?'ARRÊTÉE':'OK']);
-    });
-    rows.push([]);
-  }
-  var csv='\uFEFF'+rows.map(function(r){return r.map(function(c){return '"'+String(c).replace(/"/g,'""')+'"';}).join(',');}).join('\n');
-  var blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
-  var a=document.createElement('a');a.href=URL.createObjectURL(blob);
-  a.download='VMA_'+(S.nomClasse||S.nomSeance).replace(/\s+/g,'_')+'_'+S.dateSeance+'.csv';a.click();
-}
-
-// ════════════════════════════════════════════════════════
-//  INIT
-// ════════════════════════════════════════════════════════
-document.getElementById('dateSeance').value=new Date().toISOString().slice(0,10);
-genSeries();
+// ══════ INIT ══════
+document.getElementById('dateSeance').value=new Date().toISOString().slice(0,10);genSeries();
 </script>
-
-<script>
-if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('./service-worker.js',{scope:'./'}).then(function(reg){console.log('[PWA] SW:',reg.scope);}).catch(function(e){console.warn('[PWA] Err:',e);});});}
-</script>
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('./service-worker.js',{scope:'./'}).then(function(r){console.log('[PWA]',r.scope);}).catch(function(e){console.warn(e);});});}</script>
 </body>
 </html>
