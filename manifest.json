@@ -6,8 +6,8 @@
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait-primary",
-  "background_color": "#050d1f",
-  "theme_color": "#4a8cff",
+  "background_color": "#0f0810",
+  "theme_color": "#ff3d9a",
   "lang": "fr",
   "categories": ["education", "sports", "productivity"],
   "icons": [
