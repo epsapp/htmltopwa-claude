@@ -4,8 +4,8 @@
 //              Network-First pour index.html (mises à jour)
 // ═══════════════════════════════════════════════════════════
 
-const CACHE_NAME = 'vma-tracker-v1';
-const CACHE_CDN  = 'vma-tracker-cdn-v1';
+const CACHE_NAME = 'vma-tracker-v2';
+const CACHE_CDN  = 'vma-tracker-cdn-v2';
 
 // Fichiers locaux — mis en cache immédiatement à l'installation
 const STATIC_ASSETS = [
