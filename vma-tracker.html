@@ -186,6 +186,15 @@
   .role-opt{flex:1;padding:12px 8px;text-align:center;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.85rem;background:var(--surface2);color:var(--muted);border:none;transition:all .2s;}
   .role-opt.active{background:var(--accent);color:var(--bg);font-weight:700;}
   @media(max-width:480px){.split-chrono{font-size:2rem;}.btn-col-plot{width:60px;height:60px;font-size:.7rem;}}
+  /* Mode 4 full width */
+  .screen.mode4{max-width:100%;padding:8px 4px;}
+  /* Mini passage table in split columns */
+  .col-table-wrap{overflow-x:auto;overflow-y:auto;max-height:90px;margin-top:4px;border-top:1px solid var(--border);}
+  table.col-pass{border-collapse:collapse;width:100%;font-family:'DM Mono',monospace;font-size:.6rem;}
+  table.col-pass th{background:var(--surface2);color:var(--muted);padding:2px 4px;text-align:center;border:1px solid var(--border);}
+  table.col-pass td{padding:2px 4px;text-align:center;border:1px solid var(--border);min-width:22px;}
+  table.col-pass td.colx{color:var(--accent);font-weight:700;}
+  table.col-pass td.colm{background:rgba(255,45,85,.3);color:var(--red);}
 </style>
 </head>
 <body>
@@ -520,6 +529,8 @@ function goStep3b(){
 //  STEP 3: COURSE — MODE 4 SPLIT-SCREEN
 // ════════════════════════════════════════════════════════
 function buildCourseUI4(){
+  // Full-width mode for tablets
+  document.getElementById('screen3').classList.add('mode4');
   // Reset G
   G.globalElapsed=0;G.globalRunning=false;G.globalFinished=false;G.currentSerie=0;
   clearInterval(G.globalInterval);G.globalInterval=null;
@@ -587,7 +598,8 @@ function renderColHeaders(){
       +'<div class="col-actions">'
       +'<button class="btn-col-marche" id="colMarcheBtn'+col+'" onclick="toggleMarcheCol('+col+')">🚶 MARCHE</button>'
       +'<button class="btn-col-stop" id="colStopBtn'+col+'" onclick="stopColEarly('+col+')" disabled>⏹ ARRÊTER</button>'
-      +'</div>';
+      +'</div>'
+      +'<div class="col-table-wrap" id="colTable'+col+'"></div>';
   }
 }
 
@@ -685,6 +697,29 @@ function clickPlotCol(col){
     else if(ecart>0.5){fb.className='col-feedback fast';fb.textContent='⚡ RAPIDE';}
     else{fb.className='col-feedback slow';fb.textContent='🐢 LENT';}
   }
+  renderColTable(col);
+}
+
+function renderColTable(col){
+  var si=G.currentSerie;var r=getColRunner(col);
+  var wrap=document.getElementById('colTable'+col);if(!wrap)return;
+  if(S.runners[r].dispensed){wrap.innerHTML='';return;}
+  var d=S.data[r][si];
+  if(!d||d.passages.length===0){wrap.innerHTML='<p style="color:var(--muted);font-size:.6rem;text-align:center;padding:4px;">En attente…</p>';return;}
+  var nbCols=S.series[si].nbCols;var colGroups=[];
+  for(var cc=0;cc<nbCols;cc++){var g=[];d.passages.forEach(function(p){if(p.col===cc)g.push(p);});colGroups.push(g);}
+  var maxRows=Math.max.apply(null,colGroups.map(function(g){return g.length;}).concat([1]));
+  var html='<table class="col-pass"><thead><tr><th>#</th>';
+  for(var cc=0;cc<nbCols;cc++) html+='<th>C'+(cc+1)+'</th>';
+  html+='</tr></thead><tbody>';
+  for(var row=maxRows-1;row>=0;row--){
+    html+='<tr><td style="color:var(--muted)">'+(row+1)+'</td>';
+    for(var cc=0;cc<nbCols;cc++){var p=colGroups[cc][row];html+=p?'<td class="'+(p.isMarche?'colm':'colx')+'">'+(p.isMarche?'🚶':'×')+'</td>':'<td></td>';}
+    html+='</tr>';
+  }
+  html+='</tbody></table>';
+  wrap.innerHTML=html;
+  wrap.scrollTop=wrap.scrollHeight;
 }
 
 function toggleMarcheCol(col){
@@ -739,6 +774,7 @@ function nextSeriesAll(){
   }
   renderColHeaders();
   renderGlobalPills();
+  for(var col=0;col<2;col++) renderColTable(col);
 }
 
 // ════════════════════════════════════════════════════════

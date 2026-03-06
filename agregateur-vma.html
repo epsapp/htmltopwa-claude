@@ -572,29 +572,27 @@ async function startScanner(){
   scannerActive=true; scanCount=0; lastScanned='';
   document.getElementById('scannerCounter').textContent='';
 
-  if(isIOS){
-    document.getElementById('modePhoto').style.display='block';
+  // Toujours essayer la caméra vidéo (y compris iOS Safari 16+)
+  document.getElementById('modeVideo').style.display='block';
+  document.getElementById('modePhoto').style.display='none';
+  try{
+    const devices=await navigator.mediaDevices.enumerateDevices();
+    const cams=devices.filter(d=>d.kind==='videoinput');
+    const sel=document.getElementById('camSelect');
+    if(cams.length>1){
+      sel.style.display='block';
+      sel.innerHTML=cams.map((c,i)=>`<option value="${c.deviceId}">${c.label||'Caméra '+(i+1)}</option>`).join('');
+      const bi=cams.findIndex(c=>/back|rear|environment/i.test(c.label));
+      if(bi>=0) sel.selectedIndex=bi;
+    }
+    await openCamera(cams.length>1?sel.value:undefined);
+  } catch(e){
+    // Fallback : mode photo si caméra inaccessible
     document.getElementById('modeVideo').style.display='none';
+    document.getElementById('modePhoto').style.display='block';
     document.getElementById('capturePreview').style.display='none';
     document.getElementById('iosCapture').value='';
-    setStatus('Appuyez sur le bouton pour scanner','');
-  } else {
-    document.getElementById('modeVideo').style.display='block';
-    document.getElementById('modePhoto').style.display='none';
-    try{
-      const devices=await navigator.mediaDevices.enumerateDevices();
-      const cams=devices.filter(d=>d.kind==='videoinput');
-      const sel=document.getElementById('camSelect');
-      if(cams.length>1){
-        sel.style.display='block';
-        sel.innerHTML=cams.map((c,i)=>`<option value="${c.deviceId}">${c.label||'Caméra '+(i+1)}</option>`).join('');
-        const bi=cams.findIndex(c=>/back|rear|environment/i.test(c.label));
-        if(bi>=0) sel.selectedIndex=bi;
-      }
-      await openCamera(cams.length>1?sel.value:undefined);
-    } catch(e){
-      setStatus('Accès caméra refusé : '+e.message,'err');
-    }
+    setStatus('Caméra indisponible — mode photo','err');
   }
 }
 
