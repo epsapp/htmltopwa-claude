@@ -11,9 +11,9 @@
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;700&display=swap');
   :root{
-    --bg:#0a0c10;--surface:#12151c;--surface2:#1a1f2b;--border:#252b38;
-    --accent:#00e5ff;--green:#00ff88;--red:#ff2d55;--yellow:#ffd700;
-    --text:#e8eaf0;--muted:#5a6070;--radius:12px;
+    --bg:#050d1f;--surface:#0a1628;--surface2:#112244;--border:#1a3060;
+    --accent:#4a8cff;--green:#00ff88;--red:#ff2d55;--yellow:#ffd700;
+    --text:#e8eaf0;--muted:#5a7090;--radius:12px;
   }
   *{box-sizing:border-box;margin:0;padding:0;}
   body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;}
@@ -26,7 +26,7 @@
   .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:20px;}
   .card h2{font-family:'Bebas Neue',sans-serif;font-size:1.3rem;letter-spacing:2px;color:var(--accent);margin-bottom:16px;}
   .drop-zone{border:2px dashed var(--border);border-radius:var(--radius);padding:40px;text-align:center;cursor:pointer;transition:all .3s;position:relative;}
-  .drop-zone:hover,.drop-zone.drag-over{border-color:var(--accent);background:rgba(0,229,255,.05);}
+  .drop-zone:hover,.drop-zone.drag-over{border-color:var(--accent);background:rgba(74,140,255,.05);}
   .drop-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
   .drop-icon{font-size:2.5rem;margin-bottom:12px;}
   .drop-zone h3{font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:2px;color:var(--text);margin-bottom:6px;}
@@ -55,7 +55,7 @@
   table.preview td.slow{color:var(--yellow);}
   .btn{padding:12px 28px;border-radius:8px;border:none;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:2px;transition:all .2s;display:inline-flex;align-items:center;gap:8px;}
   .btn-primary{background:var(--accent);color:var(--bg);}
-  .btn-primary:hover{background:#00c8e0;}
+  .btn-primary:hover{background:#3a7aee;}
   .btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border);}
   .btn-secondary:hover{border-color:var(--accent);color:var(--accent);}
   .btn-danger{background:var(--red);color:#fff;}
@@ -92,8 +92,8 @@
   .scanner-btns{display:flex;gap:12px;margin-top:20px;flex-wrap:wrap;justify-content:center;}
   .cam-select{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 14px;color:var(--text);font-family:'DM Mono',monospace;font-size:.8rem;width:100%;margin-top:12px;}
   .cam-select:focus{outline:none;border-color:var(--accent);}
-  .btn-scan{background:linear-gradient(135deg,var(--accent),#0099bb);color:var(--bg);font-size:1.2rem;padding:16px 32px;border-radius:10px;border:none;cursor:pointer;font-family:'Bebas Neue',sans-serif;letter-spacing:3px;display:flex;align-items:center;gap:10px;transition:transform .15s,box-shadow .15s;box-shadow:0 0 20px rgba(0,229,255,.3);}
-  .btn-scan:hover{transform:translateY(-2px);box-shadow:0 0 30px rgba(0,229,255,.5);}
+  .btn-scan{background:linear-gradient(135deg,var(--accent),#2060cc);color:var(--bg);font-size:1.2rem;padding:16px 32px;border-radius:10px;border:none;cursor:pointer;font-family:'Bebas Neue',sans-serif;letter-spacing:3px;display:flex;align-items:center;gap:10px;transition:transform .15s,box-shadow .15s;box-shadow:0 0 20px rgba(74,140,255,.3);}
+  .btn-scan:hover{transform:translateY(-2px);box-shadow:0 0 30px rgba(74,140,255,.5);}
   .btn-scan svg{width:28px;height:28px;}
   @keyframes flashGreen{0%{box-shadow:0 0 0 0 rgba(0,255,136,.8);}100%{box-shadow:0 0 0 30px rgba(0,255,136,0);}}
   .scanner-box.flash{animation:flashGreen .4s ease-out;}
@@ -431,7 +431,7 @@ function render(){
   seances.forEach(s=>{
     const cnt=entries.filter(e=>e.seance===s).length;
     const pill=document.createElement('span');
-    pill.style.cssText='padding:4px 14px;border-radius:20px;background:rgba(0,229,255,.1);border:1px solid var(--accent);color:var(--accent);font-family:DM Mono,monospace;font-size:.8rem;';
+    pill.style.cssText='padding:4px 14px;border-radius:20px;background:rgba(74,140,255,.1);border:1px solid var(--accent);color:var(--accent);font-family:DM Mono,monospace;font-size:.8rem;';
     pill.textContent=`${s} (${cnt} élèves)`;
     sheetsList.appendChild(pill);
   });
