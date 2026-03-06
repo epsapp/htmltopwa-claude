@@ -4,8 +4,8 @@
 //              Network-First pour index.html (mises à jour)
 // ═══════════════════════════════════════════════════════════
 
-const CACHE_NAME = 'vma-tracker-v2';
-const CACHE_CDN  = 'vma-tracker-cdn-v2';
+const CACHE_NAME = 'vma-tracker-v3';
+const CACHE_CDN  = 'vma-tracker-cdn-v3';
 
 // Fichiers locaux — mis en cache immédiatement à l'installation
 const STATIC_ASSETS = [
@@ -66,8 +66,12 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // ── index.html : Network-First (reçoit les mises à jour) ──
-  if(url.pathname.endsWith('index.html') || url.pathname.endsWith('/')){
+  // ── Fichiers HTML locaux : Network-First (reçoit toujours les mises à jour) ──
+  if(url.origin === self.location.origin && url.pathname.endsWith('.html')){
+    event.respondWith(networkFirstWithFallback(event.request));
+    return;
+  }
+  if(url.pathname.endsWith('/')){
     event.respondWith(networkFirstWithFallback(event.request));
     return;
   }
