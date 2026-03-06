@@ -114,9 +114,8 @@
 <!-- ─── Modal Scanner Caméra ─── -->
 <div class="scanner-modal" id="scannerModal">
   <div style="width:min(420px,94vw);">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+    <div style="margin-bottom:14px;">
       <span style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;letter-spacing:3px;color:var(--accent);">📷 SCANNER QR</span>
-      <button onclick="stopScanner()" style="background:none;border:1px solid var(--border);border-radius:8px;color:var(--muted);padding:6px 14px;cursor:pointer;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;font-size:.9rem;">✕ FERMER</button>
     </div>
 
     <!-- Mode vidéo continu -->
@@ -131,6 +130,7 @@
       <select class="cam-select" id="camSelect" onchange="switchCamera(this.value)" style="display:none;"></select>
       <div class="scanner-btns" style="margin-top:14px;">
         <button class="btn btn-secondary" id="btnTorch" onclick="toggleTorch()" style="display:none;">🔦 Torche</button>
+        <button class="btn btn-secondary" onclick="stopScanner()">✕ Fermer</button>
       </div>
     </div>
 
