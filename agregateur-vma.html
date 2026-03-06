@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agrégateur VMA — Bilan de Classe</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<!-- ═══ jsQR — décodeur QR fiable (remplace le décodeur maison) ═══ -->
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;700&display=swap');
+  :root{
+    --bg:#0a0c10;--surface:#12151c;--surface2:#1a1f2b;--border:#252b38;
+    --accent:#00e5ff;--green:#00ff88;--red:#ff2d55;--yellow:#ffd700;
+    --text:#e8eaf0;--muted:#5a6070;--radius:12px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;}
+  header{display:flex;align-items:center;gap:16px;padding:18px 28px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;}
+  header h1{font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:3px;color:var(--accent);}
+  .subtitle{font-size:.65rem;letter-spacing:2px;color:var(--muted);text-transform:uppercase;}
+  .badge{display:inline-flex;align-items:center;gap:6px;background:rgba(0,229,255,.1);border:1px solid var(--accent);border-radius:20px;padding:4px 14px;font-family:'DM Mono',monospace;font-size:.8rem;color:var(--accent);margin-left:auto;}
+  .badge .n{font-family:'Bebas Neue',sans-serif;font-size:1.2rem;}
+  main{padding:28px;max-width:1100px;margin:0 auto;}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:20px;}
+  .card h2{font-family:'Bebas Neue',sans-serif;font-size:1.3rem;letter-spacing:2px;color:var(--accent);margin-bottom:16px;}
+  .drop-zone{border:2px dashed var(--border);border-radius:var(--radius);padding:40px;text-align:center;cursor:pointer;transition:all .3s;position:relative;}
+  .drop-zone:hover,.drop-zone.drag-over{border-color:var(--accent);background:rgba(0,229,255,.05);}
+  .drop-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+  .drop-icon{font-size:2.5rem;margin-bottom:12px;}
+  .drop-zone h3{font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:2px;color:var(--text);margin-bottom:6px;}
+  .drop-zone p{color:var(--muted);font-size:.85rem;}
+  .paste-area{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;color:var(--text);font-family:'DM Mono',monospace;font-size:.75rem;resize:vertical;min-height:80px;}
+  .paste-area:focus{outline:none;border-color:var(--accent);}
+  .entries-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;margin-top:16px;}
+  .entry-card{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px;position:relative;}
+  .entry-card.valid{border-color:var(--green);}
+  .entry-name{font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:2px;color:var(--accent);}
+  .entry-meta{font-size:.75rem;color:var(--muted);margin:4px 0 8px;}
+  .entry-series{display:flex;flex-wrap:wrap;gap:6px;}
+  .serie-badge{padding:3px 10px;border-radius:20px;font-family:'DM Mono',monospace;font-size:.7rem;}
+  .serie-ok{background:rgba(0,255,136,.15);color:var(--green);border:1px solid var(--green);}
+  .serie-fast{background:rgba(255,45,85,.15);color:var(--red);border:1px solid var(--red);}
+  .serie-slow{background:rgba(255,215,0,.15);color:var(--yellow);border:1px solid var(--yellow);}
+  .btn-del{position:absolute;top:8px;right:8px;background:none;border:none;color:var(--muted);cursor:pointer;font-size:1rem;line-height:1;}
+  .btn-del:hover{color:var(--red);}
+  .table-scroll{overflow-x:auto;margin-top:16px;}
+  table.preview{border-collapse:collapse;width:100%;font-size:.75rem;font-family:'DM Mono',monospace;min-width:800px;}
+  table.preview th{background:var(--surface2);color:var(--muted);padding:6px 10px;border:1px solid var(--border);font-size:.65rem;letter-spacing:1px;text-align:left;white-space:nowrap;}
+  table.preview td{padding:6px 10px;border:1px solid var(--border);white-space:nowrap;}
+  table.preview tr:nth-child(even) td{background:rgba(255,255,255,.02);}
+  table.preview td.ok{color:var(--green);}
+  table.preview td.fast{color:var(--red);}
+  table.preview td.slow{color:var(--yellow);}
+  .btn{padding:12px 28px;border-radius:8px;border:none;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:2px;transition:all .2s;display:inline-flex;align-items:center;gap:8px;}
+  .btn-primary{background:var(--accent);color:var(--bg);}
+  .btn-primary:hover{background:#00c8e0;}
+  .btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border);}
+  .btn-secondary:hover{border-color:var(--accent);color:var(--accent);}
+  .btn-danger{background:var(--red);color:#fff;}
+  .btn:disabled{opacity:.4;cursor:not-allowed;}
+  .actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:16px;}
+  .toast{position:fixed;bottom:24px;right:24px;background:var(--surface);border:1px solid var(--accent);border-radius:10px;padding:14px 20px;color:var(--text);font-size:.85rem;z-index:9999;transform:translateY(80px);opacity:0;transition:all .3s;}
+  .toast.show{transform:translateY(0);opacity:1;}
+  .toast.error{border-color:var(--red);}
+  .empty{text-align:center;padding:40px;color:var(--muted);}
+  .empty-icon{font-size:3rem;margin-bottom:12px;}
+  .stats-row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;}
+  .stat-box{background:var(--surface2);border-radius:8px;padding:12px 18px;border:1px solid var(--border);text-align:center;min-width:100px;}
+  .stat-val{font-family:'Bebas Neue',sans-serif;font-size:1.8rem;color:var(--accent);}
+  .stat-lbl{font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;}
+  hr{border:none;border-top:1px solid var(--border);margin:16px 0;}
+  .scanner-modal{position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .25s;}
+  .scanner-modal.open{opacity:1;pointer-events:all;}
+  .scanner-box{position:relative;width:min(400px,90vw);}
+  .scanner-box video{width:100%;border-radius:var(--radius);display:block;background:#000;}
+  .scanner-box canvas{display:none;}
+  .scanner-viewfinder{position:absolute;inset:0;pointer-events:none;}
+  .scanner-viewfinder::before,.scanner-viewfinder::after{content:'';position:absolute;width:40px;height:40px;border-color:var(--accent);border-style:solid;}
+  .scanner-viewfinder::before{top:12%;left:12%;border-width:3px 0 0 3px;border-radius:4px 0 0 0;}
+  .scanner-viewfinder::after{bottom:12%;right:12%;border-width:0 3px 3px 0;border-radius:0 0 4px 0;}
+  .corner-tr,.corner-bl{position:absolute;width:40px;height:40px;border-color:var(--accent);border-style:solid;pointer-events:none;}
+  .corner-tr{top:12%;right:12%;border-width:3px 3px 0 0;border-radius:0 4px 0 0;}
+  .corner-bl{bottom:12%;left:12%;border-width:0 0 3px 3px;border-radius:0 0 0 4px;}
+  .scan-line{position:absolute;left:12%;right:12%;height:2px;background:linear-gradient(90deg,transparent,var(--accent),transparent);animation:scanline 2s ease-in-out infinite;top:50%;}
+  @keyframes scanline{0%,100%{top:15%;}50%{top:80%;}}
+  .scanner-status{margin-top:16px;font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:2px;color:var(--accent);text-align:center;min-height:1.5em;}
+  .scanner-status.ok{color:var(--green);}
+  .scanner-status.err{color:var(--red);}
+  .scanner-counter{margin-top:8px;font-family:'DM Mono',monospace;font-size:.8rem;color:var(--muted);text-align:center;}
+  .scanner-btns{display:flex;gap:12px;margin-top:20px;flex-wrap:wrap;justify-content:center;}
+  .cam-select{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 14px;color:var(--text);font-family:'DM Mono',monospace;font-size:.8rem;width:100%;margin-top:12px;}
+  .cam-select:focus{outline:none;border-color:var(--accent);}
+  .btn-scan{background:linear-gradient(135deg,var(--accent),#0099bb);color:var(--bg);font-size:1.2rem;padding:16px 32px;border-radius:10px;border:none;cursor:pointer;font-family:'Bebas Neue',sans-serif;letter-spacing:3px;display:flex;align-items:center;gap:10px;transition:transform .15s,box-shadow .15s;box-shadow:0 0 20px rgba(0,229,255,.3);}
+  .btn-scan:hover{transform:translateY(-2px);box-shadow:0 0 30px rgba(0,229,255,.5);}
+  .btn-scan svg{width:28px;height:28px;}
+  @keyframes flashGreen{0%{box-shadow:0 0 0 0 rgba(0,255,136,.8);}100%{box-shadow:0 0 0 30px rgba(0,255,136,0);}}
+  .scanner-box.flash{animation:flashGreen .4s ease-out;}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="subtitle">EPS — Course de Durée</div>
+    <h1>Agrégateur VMA</h1>
+  </div>
+  <div class="badge"><span class="n" id="countBadge">0</span> élève(s)</div>
+</header>
+
+<div class="toast" id="toast"></div>
+
+<!-- ─── Modal Scanner Caméra ─── -->
+<div class="scanner-modal" id="scannerModal">
+  <div style="width:min(420px,94vw);">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+      <span style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;letter-spacing:3px;color:var(--accent);">📷 SCANNER QR</span>
+      <button onclick="stopScanner()" style="background:none;border:1px solid var(--border);border-radius:8px;color:var(--muted);padding:6px 14px;cursor:pointer;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;font-size:.9rem;">✕ FERMER</button>
+    </div>
+
+    <!-- Mode vidéo continu -->
+    <div id="modeVideo" style="display:none;">
+      <div class="scanner-box" id="scannerBox">
+        <video id="scannerVideo" autoplay muted playsinline></video>
+        <canvas id="scannerCanvas"></canvas>
+        <div class="scanner-viewfinder"><div class="scan-line"></div></div>
+        <div class="corner-tr"></div>
+        <div class="corner-bl"></div>
+      </div>
+      <select class="cam-select" id="camSelect" onchange="switchCamera(this.value)" style="display:none;"></select>
+      <div class="scanner-btns" style="margin-top:14px;">
+        <button class="btn btn-secondary" id="btnTorch" onclick="toggleTorch()" style="display:none;">🔦 Torche</button>
+      </div>
+    </div>
+
+    <!-- Mode photo (iOS + fallback) -->
+    <div id="modePhoto" style="display:none;">
+      <div style="background:var(--surface2);border-radius:var(--radius);padding:24px;text-align:center;border:2px dashed var(--border);">
+        <div style="font-size:3rem;margin-bottom:12px;">📸</div>
+        <p style="color:var(--muted);font-size:.85rem;margin-bottom:20px;">
+          Appuyez sur le bouton pour ouvrir l'appareil photo,<br>cadrez le QR code et prenez la photo.
+        </p>
+        <input type="file" accept="image/*" capture="environment" id="iosCapture" style="display:none;" onchange="handleIOSCapture(this)">
+        <button class="btn btn-primary" onclick="document.getElementById('iosCapture').click()" style="font-size:1.1rem;padding:14px 28px;">
+          📷 Ouvrir l'appareil photo
+        </button>
+        <div id="capturePreview" style="margin-top:16px;display:none;">
+          <img id="captureImg" style="max-width:100%;border-radius:8px;border:1px solid var(--border);">
+          <div style="margin-top:10px;">
+            <button class="btn btn-secondary" onclick="document.getElementById('iosCapture').click()" style="font-size:.9rem;padding:10px 20px;">↺ Reprendre</button>
+          </div>
+        </div>
+      </div>
+      <canvas id="scannerCanvasIOS" style="display:none;"></canvas>
+    </div>
+
+    <div class="scanner-status" id="scannerStatus" style="margin-top:14px;">Initialisation…</div>
+    <div class="scanner-counter" id="scannerCounter"></div>
+    <div class="scanner-btns">
+      <button class="btn btn-secondary" onclick="stopScanner()">✕ Fermer</button>
+    </div>
+  </div>
+</div>
+
+<main>
+  <div class="card">
+    <h2>📥 Réception des données</h2>
+    <div style="display:flex;justify-content:center;margin-bottom:24px;">
+      <button class="btn-scan" onclick="startScanner()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="5" height="5" rx="1"/><rect x="16" y="3" width="5" height="5" rx="1"/>
+          <rect x="3" y="16" width="5" height="5" rx="1"/>
+          <path d="M16 16h2v2h-2zM20 16v2M16 20h2M20 20v-1M9 3v3M3 9h3M9 21v-3M3 15h3M21 9h-3M15 9V6M21 15h-3M15 15v3"/>
+        </svg>
+        SCANNER UN QR CODE
+      </button>
+    </div>
+    <hr>
+    <div style="margin-bottom:16px;">
+      <label style="font-size:.75rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:8px;">
+        Ou coller l'URL du QR code manuellement
+      </label>
+      <textarea class="paste-area" id="urlInput" placeholder="Collez ici l'URL issue du scan QR (contient ?d=…)" rows="2"></textarea>
+      <div class="actions" style="margin-top:10px;">
+        <button class="btn btn-primary" onclick="parseFromURL()">➕ Ajouter depuis URL</button>
+        <button class="btn btn-secondary" onclick="pasteFromClipboard()">📋 Coller presse-papier</button>
+      </div>
+    </div>
+    <hr>
+    <div>
+      <label style="font-size:.75rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:8px;">
+        Ou importer des fichiers CSV exportés depuis la tablette
+      </label>
+      <div class="drop-zone" id="dropZone">
+        <input type="file" accept=".csv" multiple onchange="handleFiles(this.files)">
+        <div class="drop-icon">📂</div>
+        <h3>Glisser-déposer les CSV ici</h3>
+        <p>ou cliquer pour sélectionner · plusieurs fichiers acceptés</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>👥 Élèves enregistrés</h2>
+    <div id="statsWrap" style="display:none;"><div class="stats-row" id="statsRow"></div></div>
+    <div id="entriesContainer">
+      <div class="empty"><div class="empty-icon">🏃</div><p>Aucun élève enregistré.<br>Scannez les QR codes ou importez les CSV.</p></div>
+    </div>
+    <div class="actions" id="clearActions" style="display:none;">
+      <button class="btn btn-danger" onclick="clearAll()">🗑 Tout effacer</button>
+    </div>
+  </div>
+
+  <div class="card" id="previewCard" style="display:none;">
+    <h2>📊 Aperçu du tableau</h2>
+    <div class="table-scroll"><div id="tablePreview"></div></div>
+  </div>
+
+  <div class="card" id="exportCard" style="display:none;">
+    <h2>⬇ Export Excel</h2>
+    <p style="color:var(--muted);font-size:.85rem;margin-bottom:16px;">
+      Un onglet par séance. Colonnes : Élève, VMA, Série, Durée, Cible, %VMA, Plots, Distance, Vit. moy., Écart, Zone, Marches.
+    </p>
+    <div id="sheetsList" style="margin-bottom:16px;display:flex;flex-wrap:wrap;gap:8px;"></div>
+    <div class="actions">
+      <button class="btn btn-primary" onclick="exportExcel()">⬇ Télécharger Excel (.xlsx)</button>
+      <button class="btn btn-secondary" onclick="exportCSVAll()">⬇ Télécharger CSV (toutes séances)</button>
+    </div>
+  </div>
+</main>
+
+<script>
+// ════════════════════════════════════════════════════════
+//  STATE
+// ════════════════════════════════════════════════════════
+let entries = [];
+
+function toast(msg, isError=false){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.className='toast'+(isError?' error':'');
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+// ════════════════════════════════════════════════════════
+//  RÉCEPTION QR / URL
+// ════════════════════════════════════════════════════════
+function parseFromURL(){
+  const raw=document.getElementById('urlInput').value.trim();
+  if(!raw){toast('Aucune URL saisie',true);return;}
+  let dataStr='';
+  try{
+    if(raw.includes('?d=')){
+      const qIdx=raw.indexOf('?');
+      const params=new URLSearchParams(raw.slice(qIdx+1));
+      dataStr=params.get('d')||'';
+    } else if(raw.includes('d=')){
+      dataStr=raw.split('d=')[1].split('&')[0];
+    } else {
+      dataStr=raw;
+    }
+    if(!dataStr) throw new Error('Paramètre d= introuvable');
+    addFromCompressed(dataStr);
+    document.getElementById('urlInput').value='';
+  } catch(e){
+    toast('URL invalide : '+e.message, true);
+  }
+}
+
+function addFromCompressed(compressed){
+  try{
+    const json=LZString.decompressFromEncodedURIComponent(compressed);
+    if(!json) throw new Error('Décompression échouée');
+    const data=JSON.parse(json);
+    if(!data.runner||!data.runner.name) throw new Error('Format de données invalide');
+    addEntry(data);
+  } catch(e){
+    toast('Erreur : '+e.message, true);
+  }
+}
+
+async function pasteFromClipboard(){
+  try{
+    const text=await navigator.clipboard.readText();
+    document.getElementById('urlInput').value=text;
+    parseFromURL();
+  } catch(e){
+    toast('Accès presse-papier refusé — collez manuellement',true);
+  }
+}
+
+function checkURLOnLoad(){
+  const params=new URLSearchParams(window.location.search);
+  const d=params.get('d');
+  if(d){
+    addFromCompressed(d);
+    window.history.replaceState({},'',window.location.pathname);
+  }
+}
+
+// ════════════════════════════════════════════════════════
+//  IMPORT CSV
+// ════════════════════════════════════════════════════════
+const dropZone=document.getElementById('dropZone');
+dropZone.addEventListener('dragover',e=>{e.preventDefault();dropZone.classList.add('drag-over');});
+dropZone.addEventListener('dragleave',()=>dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop',e=>{e.preventDefault();dropZone.classList.remove('drag-over');handleFiles(e.dataTransfer.files);});
+
+function handleFiles(files){
+  Array.from(files).forEach(file=>{
+    if(!file.name.endsWith('.csv')){toast('Fichier non CSV ignoré : '+file.name,true);return;}
+    const reader=new FileReader();
+    reader.onload=e=>parseCSV(e.target.result,file.name);
+    reader.readAsText(file,'UTF-8');
+  });
+}
+
+function parseCSV(text,filename){
+  if(text.charCodeAt(0)===0xFEFF)text=text.slice(1);
+  const rows=text.split('\n').map(l=>l.split(',').map(c=>c.replace(/^"|"$/g,'').replace(/""/g,'"').trim()));
+  let seance='',classe='',date='',distPlots=25,distPiste=400;
+  if(rows[0]){
+    seance=rows[0][1]||'';classe=rows[0][3]||'';date=rows[0][5]||'';
+    distPiste=parseInt(rows[0][7])||400;distPlots=parseInt(rows[0][9])||25;
+  }
+  let r=2;
+  while(r<rows.length){
+    const row=rows[r];
+    if(!row||!row[0])break;
+    const name=row[0],vma=parseFloat(row[1])||0;
+    if(!name||!vma){r++;continue;}
+    const runnerData={name,vma,series:[]};
+    r++;r++;
+    while(r<rows.length&&rows[r][0]&&rows[r][0].startsWith('S')){
+      const sr=rows[r];
+      runnerData.series.push({
+        idx:runnerData.series.length,dureeMs:durStrToMs(sr[1]),nbCols:0,
+        cible:parseFloat(sr[2])||0,pctVma:parseInt(sr[3])||0,
+        passages:parseInt(sr[4])||0,dist:parseInt(sr[5])||0,
+        vitMoy:parseFloat(sr[6])||0,ecart:parseFloat(sr[7])||0,
+        zone:sr[8]==='OUI',marches:parseInt(sr[9])||0
+      });
+      r++;
+    }
+    while(r<rows.length&&rows[r][0]!==''&&!rows[r][0].match(/^[A-Z]/))r++;
+    r++;
+    addEntry({seance,classe,date,distPlots,distPiste,
+      series:runnerData.series.map(s=>({dureeMs:s.dureeMs,nbCols:s.nbCols})),
+      runner:runnerData});
+  }
+}
+
+function durStrToMs(str){
+  if(!str||!str.includes(':'))return 0;
+  const [m,s]=str.split(':').map(Number);
+  return(m*60+s)*1000;
+}
+
+// ════════════════════════════════════════════════════════
+//  GESTION ENTRÉES
+// ════════════════════════════════════════════════════════
+function addEntry(data){
+  const key=`${data.runner.name}|${data.seance}|${data.date}`;
+  if(entries.find(e=>e.key===key)){
+    toast(`⚠ ${data.runner.name} déjà présent pour cette séance — ignoré`,true);
+    return;
+  }
+  entries.push({
+    id:Date.now()+Math.random(),key,
+    runner:data.runner,seance:data.seance||'—',classe:data.classe||'—',
+    date:data.date||'—',distPlots:data.distPlots||25,distPiste:data.distPiste||400,
+    series:data.series||[]
+  });
+  toast(`✓ ${data.runner.name} ajouté (${data.seance})`, false);
+  render();
+}
+
+function removeEntry(id){entries=entries.filter(e=>e.id!==id);render();}
+function clearAll(){if(!confirm('Effacer toutes les entrées ?'))return;entries=[];render();}
+
+// ════════════════════════════════════════════════════════
+//  RENDU
+// ════════════════════════════════════════════════════════
+function render(){
+  document.getElementById('countBadge').textContent=entries.length;
+  const container=document.getElementById('entriesContainer');
+  const statsWrap=document.getElementById('statsWrap');
+  const clearActions=document.getElementById('clearActions');
+  const previewCard=document.getElementById('previewCard');
+  const exportCard=document.getElementById('exportCard');
+
+  if(entries.length===0){
+    container.innerHTML='<div class="empty"><div class="empty-icon">🏃</div><p>Aucun élève enregistré.<br>Scannez les QR codes ou importez les CSV.</p></div>';
+    statsWrap.style.display='none';clearActions.style.display='none';
+    previewCard.style.display='none';exportCard.style.display='none';
+    return;
+  }
+
+  statsWrap.style.display='block';clearActions.style.display='flex';
+  previewCard.style.display='block';exportCard.style.display='block';
+
+  const seances=[...new Set(entries.map(e=>e.seance))];
+  const classes=[...new Set(entries.map(e=>e.classe))];
+  const zoneOk=entries.reduce((n,e)=>n+e.runner.series.filter(s=>s.zone).length,0);
+  const zoneTotal=entries.reduce((n,e)=>n+e.runner.series.length,0);
+
+  document.getElementById('statsRow').innerHTML=`
+    <div class="stat-box"><div class="stat-val">${entries.length}</div><div class="stat-lbl">Élèves</div></div>
+    <div class="stat-box"><div class="stat-val">${seances.length}</div><div class="stat-lbl">Séance(s)</div></div>
+    <div class="stat-box"><div class="stat-val">${classes.length}</div><div class="stat-lbl">Classe(s)</div></div>
+    <div class="stat-box"><div class="stat-val" style="color:var(--green)">${zoneTotal>0?Math.round(zoneOk/zoneTotal*100):0}%</div><div class="stat-lbl">Séries dans la zone</div></div>`;
+
+  const grid=document.createElement('div');grid.className='entries-grid';
+  entries.forEach(e=>{
+    const card=document.createElement('div');card.className='entry-card valid';
+    const badges=e.runner.series.map((s,i)=>{
+      const cls=s.zone?'serie-ok':s.ecart>0.5?'serie-fast':'serie-slow';
+      const icon=s.zone?'✓':s.ecart>0.5?'⚡':'🐢';
+      return `<span class="serie-badge ${cls}">S${i+1} ${s.vitMoy.toFixed(1)} km/h ${icon}</span>`;
+    }).join('');
+    card.innerHTML=`<button class="btn-del" onclick="removeEntry(${e.id})">✕</button>
+      <div class="entry-name">${e.runner.name}</div>
+      <div class="entry-meta">${e.seance} · ${e.classe} · ${e.date} · VMA ${e.runner.vma} km/h</div>
+      <div class="entry-series">${badges}</div>`;
+    grid.appendChild(card);
+  });
+  container.innerHTML='';container.appendChild(grid);
+
+  const sheetsList=document.getElementById('sheetsList');sheetsList.innerHTML='';
+  seances.forEach(s=>{
+    const cnt=entries.filter(e=>e.seance===s).length;
+    const pill=document.createElement('span');
+    pill.style.cssText='padding:4px 14px;border-radius:20px;background:rgba(0,229,255,.1);border:1px solid var(--accent);color:var(--accent);font-family:DM Mono,monospace;font-size:.8rem;';
+    pill.textContent=`${s} (${cnt} élèves)`;
+    sheetsList.appendChild(pill);
+  });
+  renderPreview();
+}
+
+function renderPreview(){
+  const seances=[...new Set(entries.map(e=>e.seance))];
+  let html='';
+  seances.forEach(seance=>{
+    const se=entries.filter(e=>e.seance===seance);
+    if(!se.length)return;
+    const maxS=Math.max(...se.map(e=>e.runner.series.length));
+    html+=`<div style="margin-bottom:24px;"><div style="font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:2px;color:var(--accent);margin-bottom:8px;">${seance}</div>`;
+    html+='<table class="preview"><thead><tr><th>Élève</th><th>Classe</th><th>Date</th><th>VMA</th>';
+    for(let s=0;s<maxS;s++) html+=`<th>S${s+1} — Cible</th><th>S${s+1} — Vit.moy</th><th>S${s+1} — Écart</th><th>S${s+1} — Zone</th><th>S${s+1} — Marches</th>`;
+    html+='</tr></thead><tbody>';
+    se.forEach(e=>{
+      html+=`<tr><td>${e.runner.name}</td><td>${e.classe}</td><td>${e.date}</td><td>${e.runner.vma}</td>`;
+      for(let s=0;s<maxS;s++){
+        const sr=e.runner.series[s];
+        if(sr){
+          const cls=sr.zone?'ok':sr.ecart>0.5?'fast':'slow';
+          const zl=sr.zone?'✓ OUI':sr.ecart>0.5?'⚡ RAPIDE':'🐢 LENT';
+          html+=`<td>${sr.cible} km/h (${sr.pctVma}%)</td><td class="${cls}">${sr.vitMoy.toFixed(1)} km/h</td><td class="${cls}">${sr.ecart>=0?'+':''}${sr.ecart.toFixed(1)}</td><td class="${cls}">${zl}</td><td>${sr.marches>0?'🚶 '+sr.marches:'—'}</td>`;
+        } else html+='<td>—</td><td>—</td><td>—</td><td>—</td><td>—</td>';
+      }
+      html+='</tr>';
+    });
+    html+='</tbody></table></div>';
+  });
+  document.getElementById('tablePreview').innerHTML=html;
+}
+
+// ════════════════════════════════════════════════════════
+//  EXPORT EXCEL
+// ════════════════════════════════════════════════════════
+function exportExcel(){
+  if(!entries.length){toast('Aucune donnée à exporter',true);return;}
+  const wb=XLSX.utils.book_new();
+  const seances=[...new Set(entries.map(e=>e.seance))];
+  seances.forEach(seance=>{
+    const se=entries.filter(e=>e.seance===seance);
+    const maxS=Math.max(...se.map(e=>e.runner.series.length));
+    const headers=['Élève','Classe','Date','VMA (km/h)'];
+    for(let s=0;s<maxS;s++) headers.push(`S${s+1} Durée`,`S${s+1} Cible (km/h)`,`S${s+1} %VMA`,`S${s+1} Plots`,`S${s+1} Distance (m)`,`S${s+1} Vit.moy (km/h)`,`S${s+1} Écart (km/h)`,`S${s+1} Zone`,`S${s+1} Marches`);
+    const aoa=[headers];
+    se.forEach(e=>{
+      const row=[e.runner.name,e.classe,e.date,e.runner.vma];
+      for(let s=0;s<maxS;s++){
+        const sr=e.runner.series[s];
+        if(sr) row.push(msToDurStr(sr.dureeMs),sr.cible,sr.pctVma,sr.passages,sr.dist,parseFloat(sr.vitMoy.toFixed(2)),parseFloat(sr.ecart.toFixed(2)),sr.zone?'OUI':sr.ecart>0.5?'RAPIDE':'LENT',sr.marches);
+        else row.push('','','','','','','','','');
+      }
+      aoa.push(row);
+    });
+    if(se.length>1){
+      const meanRow=['MOYENNE CLASSE','','',''];
+      for(let s=0;s<maxS;s++){
+        const srs=se.map(e=>e.runner.series[s]).filter(Boolean);
+        const avgV=srs.length?srs.reduce((a,b)=>a+b.vitMoy,0)/srs.length:0;
+        const avgE=srs.length?srs.reduce((a,b)=>a+b.ecart,0)/srs.length:0;
+        const pctZ=srs.length?Math.round(srs.filter(s=>s.zone).length/srs.length*100):0;
+        meanRow.push('',srs[0]?.cible||'','',srs.length>0?srs.reduce((a,b)=>a+b.passages,0):'','',parseFloat(avgV.toFixed(2)),parseFloat(avgE.toFixed(2)),`${pctZ}% dans zone`,'');
+      }
+      aoa.push([]);aoa.push(meanRow);
+    }
+    const ws=XLSX.utils.aoa_to_sheet(aoa);
+    const cw=[{wch:20},{wch:12},{wch:12},{wch:10}];
+    for(let s=0;s<maxS;s++) cw.push({wch:8},{wch:12},{wch:8},{wch:7},{wch:12},{wch:14},{wch:12},{wch:10},{wch:9});
+    ws['!cols']=cw;
+    const sn=seance.replace(/[/\\?*\[\]]/g,'').slice(0,31)||'Séance';
+    XLSX.utils.book_append_sheet(wb,ws,sn);
+  });
+  if(seances.length>1){
+    const aoa=[['Récapitulatif toutes séances'],[]];
+    aoa.push(['Élève','Classe','VMA',...seances.flatMap(s=>[s+' — Vit.moy S1',s+' — Zone S1'])]);
+    [...new Set(entries.map(e=>e.runner.name))].forEach(name=>{
+      const row=[name];
+      const fe=entries.find(e=>e.runner.name===name);
+      row.push(fe?.classe||'',fe?.runner.vma||'');
+      seances.forEach(seance=>{
+        const entry=entries.find(e=>e.runner.name===name&&e.seance===seance);
+        const sr=entry?.runner.series[0];
+        row.push(sr?sr.vitMoy.toFixed(1):'—',sr?(sr.zone?'OUI':'NON'):'—');
+      });
+      aoa.push(row);
+    });
+    const ws=XLSX.utils.aoa_to_sheet(aoa);
+    ws['!cols']=[{wch:20},{wch:12},{wch:8},...seances.flatMap(()=>[{wch:14},{wch:8}])];
+    XLSX.utils.book_append_sheet(wb,ws,'Récap');
+  }
+  const fn=`VMA_Bilan_${entries[0]?.classe||'classe'}_${new Date().toISOString().slice(0,10)}.xlsx`;
+  XLSX.writeFile(wb,fn);
+  toast('✓ Excel téléchargé : '+fn);
+}
+
+function exportCSVAll(){
+  if(!entries.length){toast('Aucune donnée',true);return;}
+  const seances=[...new Set(entries.map(e=>e.seance))];
+  let csv='\uFEFF';
+  seances.forEach(seance=>{
+    const se=entries.filter(e=>e.seance===seance);
+    const maxS=Math.max(...se.map(e=>e.runner.series.length));
+    const headers=['Élève','Classe','Date','VMA'];
+    for(let s=0;s<maxS;s++) headers.push(`S${s+1}_Cible`,`S${s+1}_VitMoy`,`S${s+1}_Ecart`,`S${s+1}_Zone`,`S${s+1}_Marches`);
+    csv+=`\n=== ${seance} ===\n`+headers.join(',')+'\n';
+    se.forEach(e=>{
+      const row=[e.runner.name,e.classe,e.date,e.runner.vma];
+      for(let s=0;s<maxS;s++){
+        const sr=e.runner.series[s];
+        if(sr) row.push(sr.cible,sr.vitMoy.toFixed(2),sr.ecart.toFixed(2),sr.zone?'OUI':'NON',sr.marches);
+        else row.push('','','','','');
+      }
+      csv+=row.map(c=>`"${String(c)}"`).join(',')+'\n';
+    });
+  });
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download=`VMA_Bilan_${new Date().toISOString().slice(0,10)}.csv`;a.click();
+  toast('✓ CSV téléchargé');
+}
+
+function msToDurStr(ms){const t=Math.floor(ms/1000),m=Math.floor(t/60),s=t%60;return String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');}
+
+// ════════════════════════════════════════════════════════
+//  SCANNER — jsQR (fiable) + BarcodeDetector (natif)
+// ════════════════════════════════════════════════════════
+let scannerStream=null, scannerRAF=null, torchOn=false;
+let lastScanned='', scanCount=0, scannerActive=false;
+
+const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)||
+            (navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+
+async function startScanner(){
+  document.getElementById('scannerModal').classList.add('open');
+  setStatus('Initialisation…','');
+  scannerActive=true; scanCount=0; lastScanned='';
+  document.getElementById('scannerCounter').textContent='';
+
+  if(isIOS){
+    document.getElementById('modePhoto').style.display='block';
+    document.getElementById('modeVideo').style.display='none';
+    document.getElementById('capturePreview').style.display='none';
+    document.getElementById('iosCapture').value='';
+    setStatus('Appuyez sur le bouton pour scanner','');
+  } else {
+    document.getElementById('modeVideo').style.display='block';
+    document.getElementById('modePhoto').style.display='none';
+    try{
+      const devices=await navigator.mediaDevices.enumerateDevices();
+      const cams=devices.filter(d=>d.kind==='videoinput');
+      const sel=document.getElementById('camSelect');
+      if(cams.length>1){
+        sel.style.display='block';
+        sel.innerHTML=cams.map((c,i)=>`<option value="${c.deviceId}">${c.label||'Caméra '+(i+1)}</option>`).join('');
+        const bi=cams.findIndex(c=>/back|rear|environment/i.test(c.label));
+        if(bi>=0) sel.selectedIndex=bi;
+      }
+      await openCamera(cams.length>1?sel.value:undefined);
+    } catch(e){
+      setStatus('Accès caméra refusé : '+e.message,'err');
+    }
+  }
+}
+
+async function openCamera(deviceId){
+  if(scannerStream){scannerStream.getTracks().forEach(t=>t.stop());scannerStream=null;}
+  cancelAnimationFrame(scannerRAF);
+  const constraints={video:deviceId
+    ?{deviceId:{exact:deviceId},facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}}
+    :{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}}};
+  try{
+    scannerStream=await navigator.mediaDevices.getUserMedia(constraints);
+    const video=document.getElementById('scannerVideo');
+    video.srcObject=scannerStream;
+    await video.play();
+    const track=scannerStream.getVideoTracks()[0];
+    const caps=track.getCapabilities?track.getCapabilities():{};
+    document.getElementById('btnTorch').style.display=caps.torch?'inline-flex':'none';
+    setStatus('Pointez vers un QR code — détection auto','');
+    scannerRAF=requestAnimationFrame(scanFrameLoop);
+  } catch(e){
+    setStatus('Erreur caméra : '+e.message,'err');
+  }
+}
+
+async function switchCamera(deviceId){if(scannerActive) await openCamera(deviceId);}
+
+// ═══ Boucle de scan vidéo : jsQR + BarcodeDetector ═══
+async function scanFrameLoop(){
+  if(!scannerActive) return;
+  const video=document.getElementById('scannerVideo');
+  if(video.readyState===video.HAVE_ENOUGH_DATA){
+    const canvas=document.getElementById('scannerCanvas');
+    canvas.width=video.videoWidth;
+    canvas.height=video.videoHeight;
+    const ctx=canvas.getContext('2d',{willReadFrequently:true});
+    ctx.drawImage(video,0,0);
+
+    let decoded=null;
+
+    // Stratégie 1 : jsQR (fonctionne partout)
+    if(typeof jsQR!=='undefined'){
+      const imageData=ctx.getImageData(0,0,canvas.width,canvas.height);
+      const code=jsQR(imageData.data,canvas.width,canvas.height,{inversionAttempts:'dontInvert'});
+      if(code&&code.data) decoded=code.data;
+    }
+
+    // Stratégie 2 : BarcodeDetector natif (si dispo et jsQR n'a rien trouvé)
+    if(!decoded&&typeof BarcodeDetector!=='undefined'){
+      try{
+        const det=new BarcodeDetector({formats:['qr_code']});
+        const codes=await det.detect(video);
+        if(codes.length>0) decoded=codes[0].rawValue;
+      } catch(e){}
+    }
+
+    if(decoded&&decoded!==lastScanned){
+      lastScanned=decoded;
+      handleScannedCode(decoded);
+      setTimeout(()=>{lastScanned='';},3000);
+    }
+  }
+  scannerRAF=requestAnimationFrame(scanFrameLoop);
+}
+
+// ═══ iOS : traitement photo ═══
+function handleIOSCapture(input){
+  const file=input.files[0];
+  if(!file) return;
+  setStatus('Analyse du QR code…','');
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const img=new Image();
+    img.onload=()=>{
+      document.getElementById('captureImg').src=e.target.result;
+      document.getElementById('capturePreview').style.display='block';
+      const canvas=document.getElementById('scannerCanvasIOS');
+      const MAX=1280;
+      const scale=Math.min(MAX/img.width,MAX/img.height,1);
+      canvas.width=img.width*scale;
+      canvas.height=img.height*scale;
+      const ctx=canvas.getContext('2d',{willReadFrequently:true});
+      ctx.drawImage(img,0,0,canvas.width,canvas.height);
+      decodeCanvasIOS(canvas);
+    };
+    img.src=e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+async function decodeCanvasIOS(canvas){
+  const ctx=canvas.getContext('2d',{willReadFrequently:true});
+  let decoded=null;
+
+  // Stratégie 1 : jsQR (fiable, fonctionne sur tous les navigateurs)
+  if(typeof jsQR!=='undefined'){
+    const imageData=ctx.getImageData(0,0,canvas.width,canvas.height);
+    const code=jsQR(imageData.data,canvas.width,canvas.height,{inversionAttempts:'attemptBoth'});
+    if(code&&code.data) decoded=code.data;
+  }
+
+  // Stratégie 2 : BarcodeDetector natif (iOS 17+, Chrome)
+  if(!decoded&&typeof BarcodeDetector!=='undefined'){
+    try{
+      const blob=await new Promise(r=>canvas.toBlob(r,'image/jpeg',0.92));
+      const bmp=await createImageBitmap(blob);
+      const det=new BarcodeDetector({formats:['qr_code']});
+      const codes=await det.detect(bmp);
+      if(codes.length>0) decoded=codes[0].rawValue;
+    } catch(e){console.warn('BarcodeDetector fail:',e);}
+  }
+
+  if(decoded){
+    handleScannedCode(decoded);
+  } else {
+    setStatus('QR non détecté — réessayez en cadrant bien le QR code','err');
+  }
+}
+
+// ═══ Traitement du code scanné ═══
+function handleScannedCode(raw){
+  try{
+    let dataStr='';
+    if(raw.includes('?d=')||raw.includes('&d=')){
+      const qIdx=raw.indexOf('?');
+      const params=new URLSearchParams(raw.slice(qIdx+1));
+      dataStr=params.get('d')||'';
+    } else {
+      dataStr=raw;
+    }
+    if(!dataStr) throw new Error('Paramètre d= manquant dans le QR');
+
+    const json=LZString.decompressFromEncodedURIComponent(dataStr);
+    if(!json) throw new Error('Décompression échouée — QR peut-être tronqué');
+    const data=JSON.parse(json);
+    if(!data.runner?.name) throw new Error('Format de données invalide');
+
+    const box=document.getElementById('scannerBox');
+    if(box){box.classList.remove('flash');void box.offsetWidth;box.classList.add('flash');}
+
+    scanCount++;
+    addEntry(data);
+    setStatus('✓ '+data.runner.name+' ajouté !','ok');
+    document.getElementById('scannerCounter').textContent=
+      scanCount+' QR code'+(scanCount>1?'s':'')+' scanné'+(scanCount>1?'s':'');
+    if(navigator.vibrate) navigator.vibrate([100,50,100]);
+
+    if(isIOS){
+      setTimeout(()=>{
+        document.getElementById('iosCapture').value='';
+        document.getElementById('capturePreview').style.display='none';
+        setStatus('Prêt pour le prochain QR code','');
+      },2000);
+    }
+  } catch(e){
+    setStatus('⚠ '+e.message,'err');
+  }
+}
+
+async function toggleTorch(){
+  if(!scannerStream) return;
+  const track=scannerStream.getVideoTracks()[0];
+  torchOn=!torchOn;
+  try{
+    await track.applyConstraints({advanced:[{torch:torchOn}]});
+    document.getElementById('btnTorch').textContent=torchOn?'🔦 ON':'🔦 Torche';
+  } catch(e){toast('Torche non supportée',true);torchOn=false;}
+}
+
+function stopScanner(){
+  scannerActive=false;
+  cancelAnimationFrame(scannerRAF);
+  if(scannerStream){scannerStream.getTracks().forEach(t=>t.stop());scannerStream=null;}
+  document.getElementById('scannerModal').classList.remove('open');
+  const video=document.getElementById('scannerVideo');
+  if(video) video.srcObject=null;
+  document.getElementById('modeVideo').style.display='none';
+  document.getElementById('modePhoto').style.display='none';
+  document.getElementById('capturePreview').style.display='none';
+  document.getElementById('iosCapture').value='';
+  document.getElementById('scannerCounter').textContent='';
+  document.getElementById('camSelect').style.display='none';
+  scanCount=0;lastScanned='';
+}
+
+function setStatus(msg,cls){
+  const el=document.getElementById('scannerStatus');
+  el.textContent=msg;
+  el.className='scanner-status'+(cls?' '+cls:'');
+}
+
+document.getElementById('scannerModal').addEventListener('click',function(e){
+  if(e.target===this) stopScanner();
+});
+
+// ════════════════════════════════════════════════════════
+//  BOOT
+// ════════════════════════════════════════════════════════
+render();
+checkURLOnLoad();
+</script>
+</body>
+</html>
